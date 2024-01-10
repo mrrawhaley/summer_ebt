@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summer EBT Eligibility Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        #question-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .question {
+            display: none;
+        }
+        #question1 {
+            display: block;
+        }
+        #result {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="question-container">
+    <div id="question1" class="question">
+        <p>Question 1: Is your child school-aged?</p>
+        <button onclick="nextQuestion('question1', 'yes')">Yes</button>
+        <button onclick="nextQuestion('question1', 'no')">No</button>
+    </div>
+
+    <div id="question2" class="question">
+        <!-- This question will be displayed only if the answer to question 1 is "Yes" -->
+        <p>Question 2: Does your child participate in SNAP, TANF, FDPIR, or Medicaid?</p>
+        <button onclick="nextQuestion('question2', 'yes')">Yes</button>
+        <button onclick="nextQuestion('question2', 'no')">No</button>
+    </div>
+
+    <div id="question3" class="question">
+        <!-- This question will be displayed only if the answer to question 2 is "No" -->
+        <p>Question 3: Has your child been identified as homeless, runaway, migrant, or foster youth?</p>
+        <button onclick="nextQuestion('question3', 'yes')">Yes</button>
+        <button onclick="nextQuestion('question3', 'no')">No</button>
+    </div>
+
+    <div id="question4" class="question">
+        <!-- This question will be displayed only if the answer to question 3 is "No" -->
+        <p>Question 4: Does your child participate in a Head Start program?</p>
+        <button onclick="nextQuestion('question4', 'yes')">Yes</button>
+        <button onclick="nextQuestion('question4', 'no')">No</button>
+    </div>
+
+    <div id="question5" class="question">
+        <!-- This question will be displayed only if the answer to question 4 is "No" -->
+        <p>Question 5: Have you completed an application for your child to receive free or reduced-price school meals or received a letter stating eligibility?</p>
+        <button onclick="nextQuestion('question5', 'yes')">Yes</button>
+        <button onclick="nextQuestion('question5', 'no')">No</button>
+    </div>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    function nextQuestion(question, answer) {
+        // Hide the current question
+        let currentQuestion = question; // document.querySelector('.question:visible');
+        // currentQuestion.style.display = 'none';
+
+        // Show the next question based on branching logic
+        switch (currentQuestion) {
+            case 'question1':
+                if (answer === 'yes') {
+                    document.getElementById('question2').style.display = 'block';
+                } else {
+                    document.getElementById('result').innerHTML = 'Your child is not eligible for Summer EBT.';
+                }
+                break;
+            case 'question2':
+                if (answer === 'yes') {
+                    document.getElementById('result').innerHTML = 'You do not need to complete an application for Summer EBT for your child. Your child is eligible to receive Summer EBT benefits automatically without having to complete an application.';
+                } else {
+                    document.getElementById('question3').style.display = 'block';
+                }
+                break;
+            case 'question3':
+                if (answer === 'yes') {
+                    document.getElementById('result').innerHTML = 'You do not need to complete an application for Summer EBT for your child. Your child is eligible to receive Summer EBT benefits automatically without having to complete an application.';
+                } else {
+                    document.getElementById('question4').style.display = 'block';
+                }
+                break;
+            case 'question4':
+                if (answer === 'yes') {
+                    document.getElementById('result').innerHTML = 'You do not need to complete an application for Summer EBT for your child. Your child is eligible to receive Summer EBT benefits automatically without having to complete an application.';
+                } else {
+                    document.getElementById('question5').style.display = 'block';
+                }
+                break;
+            case 'question5':
+                if (answer === 'yes') {
+                    document.getElementById('result').innerHTML = 'You do not need to complete an application for Summer EBT for your child. Your child is eligible to receive Summer EBT benefits automatically without having to complete an application.';
+                } else {
+                    document.getElementById('result').innerHTML = 'You must apply for Summer EBT benefits for your child.';
+                }
+                break;
+        }
+    }
+</script>
+
+</body>
+</html>
