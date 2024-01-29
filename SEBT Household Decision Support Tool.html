@@ -17,7 +17,7 @@
         .question {
             display: none;
         }
-        #question1 {
+        #ageEligibility {
             display: block;
         }
         #result {
@@ -29,88 +29,158 @@
 <body>
 
 <div id="question-container">
-    <div id="question1" class="question">
-        <p>Question 1: Is your child school-aged?</p>
-        <button onclick="nextQuestion('question1', 'yes')">Yes</button>
-        <button onclick="nextQuestion('question1', 'no')">No</button>
+    <div id="ageEligibility" class="question">
+        <p></p>
+        <button value="yes">Yes</button>
+        <button value="no">No</button>
     </div>
 
-    <div id="question2" class="question">
+    <div id="programParticipation" class="question">
         <!-- This question will be displayed only if the answer to question 1 is "Yes" -->
-        <p>Question 2: Does your child participate in SNAP, TANF, FDPIR, or Medicaid?</p>
-        <button onclick="nextQuestion('question2', 'yes')">Yes</button>
-        <button onclick="nextQuestion('question2', 'no')">No</button>
+        <p></p>
+        <button value="yes">Yes</button>
+        <button value="no">No</button>
     </div>
 
-    <div id="question3" class="question">
+    <div id="categoricalEligibilityStatus" class="question">
         <!-- This question will be displayed only if the answer to question 2 is "No" -->
-        <p>Question 3: Has your child been identified as homeless, runaway, migrant, or foster youth?</p>
-        <button onclick="nextQuestion('question3', 'yes')">Yes</button>
-        <button onclick="nextQuestion('question3', 'no')">No</button>
+        <p></p>
+        <button value="yes">Yes</button>
+        <button value="no">No</button>
     </div>
 
-    <div id="question4" class="question">
+    <div id="HeadStartStatus" class="question">
         <!-- This question will be displayed only if the answer to question 3 is "No" -->
-        <p>Question 4: Does your child participate in a Head Start program?</p>
-        <button onclick="nextQuestion('question4', 'yes')">Yes</button>
-        <button onclick="nextQuestion('question4', 'no')">No</button>
+        <p></p>
+        <button value="yes">Yes</button>
+        <button value="no">No</button>
     </div>
 
-    <div id="question5" class="question">
+    <div id="FREligibility" class="question">
         <!-- This question will be displayed only if the answer to question 4 is "No" -->
-        <p>Question 5: Have you completed an application for your child to receive free or reduced-price school meals or received a letter stating eligibility?</p>
-        <button onclick="nextQuestion('question5', 'yes')">Yes</button>
-        <button onclick="nextQuestion('question5', 'no')">No</button>
+        <p></p>
+        <button value="yes">Yes</button>
+        <button value="no">No</button>
     </div>
 
     <div id="result"></div>
 </div>
 
-<script>
-    function nextQuestion(question, answer) {
-        // Hide the current question
-        let currentQuestion = question; // document.querySelector('.question:visible');
-        // currentQuestion.style.display = 'none';
+<script>    
+    // START question parameters
+    // NOTE: wrap all parameters in single quotes (e.g., "'parameter'")
 
-        // Show the next question based on branching logic
-        switch (currentQuestion) {
-            case 'question1':
-                if (answer === 'yes') {
-                    document.getElementById('question2').style.display = 'block';
-                } else {
-                    document.getElementById('result').innerHTML = 'Your child is not eligible for Summer EBT.';
-                }
+        // compulsory school age - minimum age
+        let compulsorySchoolAgeMinimum = '6';
+
+        // compulsory school age - maximum age
+        let compulsorySchoolAgeMaximum = '17';
+
+        // instructional year - start date; write out full name of month and full year
+        let instructionalYearStart = 'August 17, 2023';
+
+        // instructional year - end date; write out full name of month and full year
+        let instructionalYearEnd = 'June 7, 2024';
+
+        // programs for categorical eligibility - use "or" before listing last program; use state-specific program names as needed (e.g., 'CalFresh' instead of 'SNAP')
+        let categoricalEligibilityPrograms = 'SNAP, TANF, FDPIR, or Medicaid';
+
+        // Head Start program name(s) - list name(s) used for Head Start program(s)
+        let HeadStartPrograms = 'Head Start';
+
+        // alternative income form name - title of alternative income form
+        let alternativeIncomeFormName = 'alternative income form';
+
+    // END question parameters
+    
+    // create question text in map object
+        
+        const decisionTool = new Map();
+        decisionTool.set(
+            'ageEligibility', 
+            'Was your child between the ages of ' + compulsorySchoolAgeMinimum + ' and ' + compulsorySchoolAgeMaximum + 
+            ' between ' + instructionalYearStart + ' and ' + instructionalYearEnd + ' OR enrolled in a school participating in' + 
+            ' the National School Lunch Program or School Breakfast Program?'
+        ).set(
+            'programParticipation', 
+            'Did your child participate in ' + categoricalEligibilityPrograms + ' at any time between ' + 
+            instructionalYearStart + ' and ' + instructionalYearEnd + '?'
+        ).set(
+            'categoricalEligibilityStatus',
+            'Was your child been identified by their school, district, or state as a homeless, runaway, migrant, or foster youth?'
+        ).set(
+            'HeadStartStatus',
+            'Did your child participate in ' + HeadStartPrograms + ' at any time between ' + 
+            instructionalYearStart + ' and ' + instructionalYearEnd + '?'
+        ).set(
+            'FREligibility',
+            'Did you receive a letter stating your child was eligible for free or reduced-price school meals?'
+        );
+        
+    // write questions to webpage
+
+        decisionTool.forEach((value, key, map) => {
+            document.getElementById(key).firstElementChild.innerHTML = value;
+        });
+    
+    // decision processing
+
+    function decisionProcess(questionID, questionText, answer) {
+        var currentQuestion = questionID;
+        var currentQuestionText = questionText;
+        var currentAnswer = answer;
+        var decisionToolQuestionIDArray = Array.from(decisionTool.keys());
+        var decisionToolQuestionTextArray = Array.from(decisionTool.values());
+
+        function nextDecisionPoint() {
+            const nextQuestionIndex = decisionToolQuestionIDArray.indexOf(currentQuestion) + 1;
+            document.getElementById(decisionToolQuestionIDArray[nextQuestionIndex]).style.display = 'block';
+            for (i = decisionToolQuestionIDArray.length - 1; i > nextQuestionIndex; i--) {
+                document.getElementById(decisionToolQuestionIDArray[i]).children[1].style.borderColor = null;
+                document.getElementById(decisionToolQuestionIDArray[i]).children[2].style.borderColor = null;
+                document.getElementById(decisionToolQuestionIDArray[i]).style.display = 'none';
+            }; 
+            document.getElementById('result').innerHTML = null;
+        };
+
+        function notEligible() {
+            for (i = decisionToolQuestionIDArray.length - 1; i > decisionToolQuestionIDArray.indexOf(currentQuestion); i--) {
+                document.getElementById(decisionToolQuestionIDArray[i]).style.display = 'none';
+            };
+            document.getElementById('result').innerHTML = 'Your child is not eligible for Summer EBT.';
+        };
+
+        function eligible() {
+            for (i = decisionToolQuestionIDArray.length - 1; i > decisionToolQuestionIDArray.indexOf(currentQuestion); i--) {
+                document.getElementById(decisionToolQuestionIDArray[i]).style.display = 'none';
+            };
+            document.getElementById('result').innerHTML = 'Your child is eligible to receive Summer EBT benefits automatically without having to complete an application. You do not need to complete an application for Summer EBT for your child.';
+        };
+
+        switch(currentQuestion) {
+            case 'ageEligibility':
+                answer === 'yes' ? nextDecisionPoint() : notEligible();
                 break;
-            case 'question2':
-                if (answer === 'yes') {
-                    document.getElementById('result').innerHTML = 'You do not need to complete an application for Summer EBT for your child. Your child is eligible to receive Summer EBT benefits automatically without having to complete an application.';
-                } else {
-                    document.getElementById('question3').style.display = 'block';
-                }
+            case 'FREligibility':
+                answer === 'yes' ? eligible() : document.getElementById('result').innerHTML = 'You must apply for Summer EBT for your child.';
                 break;
-            case 'question3':
-                if (answer === 'yes') {
-                    document.getElementById('result').innerHTML = 'You do not need to complete an application for Summer EBT for your child. Your child is eligible to receive Summer EBT benefits automatically without having to complete an application.';
-                } else {
-                    document.getElementById('question4').style.display = 'block';
-                }
-                break;
-            case 'question4':
-                if (answer === 'yes') {
-                    document.getElementById('result').innerHTML = 'You do not need to complete an application for Summer EBT for your child. Your child is eligible to receive Summer EBT benefits automatically without having to complete an application.';
-                } else {
-                    document.getElementById('question5').style.display = 'block';
-                }
-                break;
-            case 'question5':
-                if (answer === 'yes') {
-                    document.getElementById('result').innerHTML = 'You do not need to complete an application for Summer EBT for your child. Your child is eligible to receive Summer EBT benefits automatically without having to complete an application.';
-                } else {
-                    document.getElementById('result').innerHTML = 'You must apply for Summer EBT benefits for your child.';
-                }
-                break;
-        }
-    }
+            default:
+                answer === 'yes' ? eligible() : nextDecisionPoint();
+        };
+
+    };
+
+    // add onClick functionality to all buttons
+
+    var buttons = document.querySelectorAll('button');
+    for (i of buttons) {
+        i.addEventListener('click', function() {
+            decisionProcess(this.parentNode.id, this.parentNode.firstChild.innerHTML, this.value);
+            this.style.borderColor = 'blue';
+            this.value === 'yes' ? this.parentNode.children[2].style.borderColor = null : this.parentNode.children[1].style.borderColor = null
+        });
+    };
+
 </script>
 
 </body>
