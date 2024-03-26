@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+
+<!--
+    ** ABOUT THE SUMMER EBT ELIGIBILITY NAVIGATOR **
+    Thank you for using No Kid Hungry's Summer EBT Eligibility Navigator!
+    
+    ** CUSTOMIZING THIS TOOL **
+    This navigator must be customized to match your state's/territory's/tribe's decision making about Summer EBT implementation! The customization will be clearly labeled with the phrase "CUSTOMIZATION REQUIRED" above the area where customization is needed, followed by a description of what needs to be customized and how to customize it. You will need to customize the following:
+    -- Age range for compulsory education
+    -- Programs and statuses to be used for streamlined certification
+    
+    There will also be a section labeled "NO CUSTOMIZATION BEYOND THIS POINT" to identify where the intended customizations end. While any of the contents of this tool can be customized from a technical standpoint, everything after the "NO CUSTOMIZATION BEYOND THIS POINT" label requires working knowledge of the JavaScript programming language. Modifying this content without knowledge of JavaScript may result in this tool no longer working as intended.
+
+    Customization will be a matter of replacing text or deleting unncessary options for households to choose from. So anyone with knowledge of decision making about Summer EBT implementation should be able to do the necessary customizations. 
+
+    ** IMPLEMENTING THIS TOOL **
+    While anyone should be able to customize the contents of this tool, the tool must be added to your state's/territory's/tribe's website by whoever manages your website. Please contact your website manager to have this tool added to your website.
+
+    ** QUESTIONS **
+    If you have any questions, please reach out to Regis Whaley, Senior Program Manager at Share Our Strength, at rwhaley@strength.org.
+-->
+
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Summer EBT Eligibility Navigator</title>
+</head>
+<body>
+
+<div id="introduction">
+    
+    <h1 id="tool_name">
+        Summer EBT Eligibility Navigator
+    </h1>
+    <p id="intro_paragraph">
+        The purpose of this tool is to help you determine if your child is eligible for Summer EBT. If your child is or may be eligible for Summer EBT, this tool will also provide you with information about how your child will receive benefits. Your child will receive benefits either automatically or after you submit an application.
+    </p>
+    <h2>
+        What information will I need to use this tool?
+    </h2>
+    <p>
+        You will need to know at least your child's age and grade level in school. You may also be asked about your child's participation in certain benefit programs, if your child has been approved for free or reduced-price school meals, and your household's size and annual income.
+    </p>
+    <p>
+        If you have more than one child and would like to check eligibility for each child individually, use the "Reset Form" button below to reset the form and enter new responses.
+    </p>
+    <p>
+        <button id="reset">Reset Form</button>
+    </p>
+</div>
+
+<h2>
+    <p>Start here!</p>
+</h2>
+
+<div id="q_child_education" class="screen">
+    <p class="question">Which of the following best describes your child's education?</p>
+    <p>
+        <!--
+            CUSTOMIZATION REQUIRED
+            Modify the NOTE below to reflect how parents should, if at all, confirm their child's attendance at a school participating in SBP or NSLP. If you want to insert a link to a list of schools, you can create an HTML link. If you do not know how to do this, use the instructions here:
+
+            https://www.w3schools.com/tags/tag_a.asp
+
+            With a link, the HTML code for the note below could look something like this:
+
+            <i>NOTE: If your child attends a public school, your child's school most likely participates in these meal programs. Contact your child's school or the <a href="https://www.StateDepartmentOfEducation.gov/">state department of education</a> if you need to confirm this.</i>
+        -->
+        <i>NOTE: If your child attends a public school, your child's school most likely participates in these meal programs. Contact your child's school or the {{ name of state department of education }} if you need to confirm this.</i>
+    </p>
+        <input type="radio" name="child_education" value="in_school">My child attends a school that participates in the School Breakfast Program or National School Lunch Program.</input></br>
+        <input type="radio" name="child_education" value="not_in_school" checked>My child is home schooled or does not attend a school that participates in the School Breakfast Program.</input>
+</div>
+
+<div id="q_child_age" class="screen">
+    <!--
+        CUSTOMIZATION REQUIRED
+        Change the question "Is your child between the ages of 6 and 17?" below to reflect your state's/territory's/tribe's age range for compulsory school attendance by replacing "6" and "17" with the correct ages.
+    -->
+    <p class="question">
+        Is your child between the ages of 6 and 17?
+    </p>
+        <input type="radio" name="child_age" value="compulsory_age">Yes</input></br>
+        <input type="radio" name="child_age" value="not_compulsory_age" checked>No</input>
+</div>
+
+<button id="btn_check_eligibility" class="screen">Check eligibility</button><br/>
+
+<div id="streamlined_cert_needed" class="request_more_info">
+    Your child may be eligible for Summer EBT. The following questions will help you determine if you will receive benefits automatically or if you must complete a Summer EBT application.
+</div>
+
+<div id="q_child_programs" class="streamlined_cert">
+    <p class="question">Does your child participate in any of the following programs?</p>
+    <!--
+        CUSTOMIZATION REQUIRED
+        
+        1. Update the list of programs utilized for streamlined certification by deleting the entire block of text containing the name of any programs you will not be using for streamlined certification. For example, if you will not be using Medicaid for streamlined certification, delete all of the following:
+
+            <input type="checkbox" name="child_programs" value="medicaid">
+                Medicaid
+            </input></br>
+
+        2. If your state/territory/tribe uses program names that are different from the federal program names, edit the program name between the <input> tags. For example, in California, SNAP is referred to as CalFresh. So in California the block:
+
+            <input type="checkbox" name="child_programs" value="snap" checked>
+                SNAP
+            </input></br>
+
+        ...should read as:
+
+            <input type="checkbox" name="child_programs" value="snap" checked>   <-- DON'T CHANGE THIS
+                CalFresh                                                         <-- CHANGE THIS LINE ONLY!
+            </input></br>                                                        <-- DON'T CHANGE THIS
+
+    -->
+        <input type="checkbox" id="snap" name="child_programs" value="snap" checked>
+            SNAP
+        </input></br>
+        
+        <input type="checkbox" id="tanf" name="child_programs" value="tanf">
+            TANF
+        </input></br>
+        
+        <input type="checkbox" id="fdpir" name="child_programs" value="fdpir" checked>
+            FDPIR
+        </input></br>
+        
+        <input type="checkbox" id="medicaid" name="child_programs" value="medicaid">
+            Medicaid
+        </input></br>
+        
+        <input type="checkbox" id="head_start" name="child_programs" value="head_start">
+            Head Start
+        </input></br>
+        
+
+
+        <input type="checkbox" id="no_programs" name="child_programs" value="no_programs">My child does not participate in any of these programs.</input>
+</div>
+
+<div id="q_child_status" class="streamlined_cert">
+    <p class="question">Has your child's school/county/state identified your child as any of the following?</p>
+
+        <!--
+        CUSTOMIZATION REQUIRED
+        
+        Update the list of statuses utilized for streamlined certification by deleting the entire block of text containing the name of any programs you will not be using for streamlined certification. For example, if you will not be using "runaway" status for streamlined certification, delete all of the following:
+
+            <input type="checkbox" name="child_status" value="runaway">
+                Runaway
+            </input></br>
+
+    -->
+
+        <input type="checkbox" id="homeless" name="child_status" value="homeless">
+            Homeless / experiencing homelessness
+        </input></br>
+        
+        <input type="checkbox" id="runaway" name="child_status" value="runaway">
+            Runaway
+        </input></br>
+        
+        <input type="checkbox" id="migrant" name="child_status" value="migrant">
+            A migrant student
+        </input></br>
+        
+        <input type="checkbox" id="foster" name="child_status" value="foster" checked>
+            A foster child
+        </input></br>
+        
+        
+        
+        <input type="checkbox" id="no_status" name="child_status" value="no_status">My child's school/county/state has not identfied my child as any of these.</input>
+</div>
+
+<div id="q_child_free_reduced_eligibility" class="streamlined_cert">
+    <p class="question">Has your child's school/district notified you about you child's eligibility for free or reduced-price meals?</p>
+        <input type="radio" id="no_app" name="child_free_reduced_eligibility" value="no_app">No - I did not apply for free or reduced-price meals.</input></br>
+        <input type="radio" id="app_na" name="child_free_reduced_eligibility" value="app_na">No - My child does not attend a school participating in the School Breakfast Program or National School Lunch Program.</input></br>
+        <input type="radio" id="app_free_eligibility" name="child_free_reduced_eligibility" value="app_free_eligibility">Yes - my child is eligible for free school meals.</input></br>
+        <input type="radio" id="app_reduced_price_eligibility" name="child_free_reduced_eligibility" value="app_reduced_price_eligibility">Yes - my child is eligible for reduced-price school meals.</input></br>
+        <input type="radio" id="app_paid_eligibility" name="child_free_reduced_eligibility" value="app_paid_eligibility">Yes - my child is not eligible for free or reduced-price school meals.</input></br>
+        <input type="radio" id="app_eligibility_unknown" name="child_free_reduced_eligibility" value="app_eligibility_unknown" checked>I do not know if my child is eligible for free or reduced-price school meals.</input>
+</div>
+
+<button id="btn_streamlined_cert" class="streamlined_cert">Check eligibility</button><br/>
+
+<!-- <div id="income_eligible_needed" class="request_more_info">
+    <p>
+        Based on the information you provided, your child may be eligible for Summer EBT. Please answer the following questions.
+    </p>
+</div>
+
+<div id="q_household_size" class="income_eligible">
+    <p class="question">How many people are in your household?</p>
+    <select name="household_size">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+        <option value="12">12</option>
+        <option value="13">13</option>
+        <option value="14">14</option>
+        <option value="15">15</option>
+        <option value="16">16</option>
+        <option value="17">17</option>
+        <option value="18">18</option>
+        <option value="19">19</option>
+        <option value="20">20</option>
+    </select>
+</div>
+
+<div id="q_household_income" class="income_eligible">
+    <p class="question">
+        Is your household income less than or equal to 185% FPL?
+    </p>
+        <input type="radio" name="household_income" value="income_eligible">Yes</input></br>
+        <input type="radio" name="household_income" value="not_income_eligible">No</input>
+</div> -->
+
+<div id="result" class="result">
+
+</div>
+
+</body>
+
+<style type="text/css">
+    .streamlined_cert, #streamlined_cert_needed, .income_eligible, #income_eligible_needed {
+        display: none;
+    }
+
+    .result, .request_more_info {
+        margin-top: 20px;
+        font-weight: bold;
+    }
+
+    .result {
+        height: 50vh;
+    }
+
+    button {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<!--
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+    NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT *** NO CUSTOMIZATION BEYOND THIS POINT
+-->
+
+<script type="text/javascript">
+
+// const screen_questions = ["child_education", "child_age"];
+// var screen_questions_responses = [];
+
+// const streamlined_cert_questions = ["child_programs", "child_status", "child_free_reduced_eligibility"];
+// var child_programs_list_collection = document.getElementsByName("child_programs");
+// var child_programs_list_selected = [];
+// var eligible_by_program;
+// var child_status_list_collection = document.getElementsByName("child_status");
+// var child_status_list_selected = [];
+// var child_free_reduced_eligibility_collection = document.getElementsByName("child_free_reduced_eligibility");
+// var child_free_reduced_eligibility_value;
+// var eligible_by_status;
+
+var screen_elements = document.getElementsByClassName("screen");
+var streamlined_cert_elements = document.getElementsByClassName("streamlined_cert");
+
+// const income_eligible_questions = ["household_size", "household_income"];
+// var income_eligible_responses = [];
+// var income_eligible_elements = document.getElementsByClassName("income_eligible");
+
+// var responses = [];
+const screen_questions = ["child_education", "child_age"];
+var screen_questions_responses = [];
+const streamlined_cert_questions = ["child_programs", "child_status", "child_free_reduced_eligibility"];
+var streamlined_cert_questions_responses = [];
+const income_eligible_questions = ["household_size", "household_income"];
+var income_eligible_questions_responses = [];
+
+function get_responses(question) {
+    var radioButtonGroup = document.getElementsByName(question);
+    // var checkedRadio = radioButtonGroup.filter(isChecked);
+    var checkedRadio = Array.from(radioButtonGroup).filter(
+        (radio) => radio.checked
+        );
+    if (checkedRadio === void 0) {
+    } else {
+        // switch (true) {
+        //     case screen_questions.includes(question):
+        //         screen_questions_responses.push(checkedRadio.value);
+        //         break;
+        //     case streamlined_cert_questions.includes(question):
+        //         streamlined_cert_questions_responses.push(checkedRadio.value);
+        //         break;
+        //     case income_eligible_questions.includes(question):
+        //         income_eligible_questions_responses.push(checkedRadio.value);
+        //         break;        
+        // };
+        const iterator = checkedRadio.values();
+        for (i of iterator) {
+            switch (true) {
+                case screen_questions.includes(question):
+                    screen_questions_responses.push(i.value);
+                    break;
+                case streamlined_cert_questions.includes(question):
+                    streamlined_cert_questions_responses.push(i.value);
+                    break;
+                case income_eligible_questions.includes(question):
+                    income_eligible_questions_responses.push(i.value);
+                    break;        
+            };
+        };
+    };
+};
+
+function screen_questions_result() {
+    screen_questions_responses = [];
+    document.getElementById("result").innerHTML = "";
+    document.getElementById("streamlined_cert_needed").style.display = "none";
+    for (i = 0; i < streamlined_cert_elements.length; i++) {
+                    streamlined_cert_elements[i].style.display = "none";
+                };
+
+    for (question in screen_questions) {
+        get_responses(screen_questions[question]);
+    };
+
+    var screen_questions_responses_complete = screen_questions_responses.length == screen_questions.length ? true : false;
+    if (screen_questions_responses_complete == true) {
+        switch (true) {
+            case screen_questions_responses.includes("not_in_school") && screen_questions_responses.includes("not_compulsory_age"):
+                document.getElementById("result").innerHTML = "Your child is not eligible for Summer EBT. Children who are not enrolled in school and not between the ages of 6 and 17 are not eligible for Summer EBT.";
+                document.getElementById("result").scrollIntoView({behavior: "smooth"});
+                break;
+            case screen_questions_responses.includes("not_in_school") && screen_questions_responses.includes("compulsory_age"):
+            document.getElementById("streamlined_cert_needed").style.display = "block";
+                for (i = 0; i < streamlined_cert_elements.length; i++) {
+                    streamlined_cert_elements[i].style.display = "block";
+                };
+                // set applications question to "app_na" value and disable all other options
+                document.getElementsByName("child_free_reduced_eligibility").display = "none";
+                document.getElementById("q_child_free_reduced_eligibility").display = "none";
+                document.getElementById("app_na").checked = true;
+                document.getElementById("streamlined_cert_needed").scrollIntoView({behavior: "smooth"});
+                break;
+            default:
+                document.getElementById("streamlined_cert_needed").style.display = "block";
+                for (i = 0; i < streamlined_cert_elements.length; i++) {
+                    streamlined_cert_elements[i].style.display = "block";
+                };
+                document.getElementById("streamlined_cert_needed").scrollIntoView({behavior: "smooth"});
+                break;
+        };
+    };
+
+
+};
+
+function disable_other_options() {
+    // var child_programs_list_collection = document.getElementsByName("child_programs");
+    // var child_programs_list_collection_length = document.getElementsByName("child_programs").length;
+    // var child_status_list_collection = document.getElementsByName("child_status");
+    // var child_status_list_collection_length = document.getElementsByName("child_status").length;
+    // switch (true) {
+    //     case child_programs_list_collection[child_programs_list_collection_length - 1].checked:
+    //         for (i = 0; i < document.getElementsByName("child_programs").length - 1; i++) {
+    //             child_programs_list_collection[i].checked = false;
+    //         };
+    //     case child_status_list_collection[child_status_list_collection_length - 1].checked:
+    //         for (i = 0; i < document.getElementsByName("child_status").length - 1; i++) {
+    //             child_status_list_collection[i].checked = false;
+    //         };
+    //         break;
+    // };
+    if (document.getElementById("no_programs").checked == true) {
+        document.getElementById("snap").checked = false;
+        document.getElementById("snap").disabled = true;
+        document.getElementById("tanf").checked = false;
+        document.getElementById("tanf").disabled = true;
+        document.getElementById("fdpir").checked = false;
+        document.getElementById("fdpir").disabled = true;
+        document.getElementById("medicaid").checked = false;
+        document.getElementById("medicaid").disabled = true;
+        document.getElementById("head_start").checked = false;
+        document.getElementById("head_start").disabled = true;
+    };
+
+    if (document.getElementById("no_programs").checked == false) {
+        document.getElementById("snap").disabled = false;
+        document.getElementById("tanf").disabled = false;
+        document.getElementById("fdpir").disabled = false;
+        document.getElementById("medicaid").disabled = false;
+        document.getElementById("head_start").disabled = false;
+    };
+
+    if (document.getElementById("no_status").checked == true) {
+        document.getElementById("homeless").checked = false;
+        document.getElementById("homeless").disabled = true;
+        document.getElementById("runaway").checked = false;
+        document.getElementById("runaway").disabled = true;
+        document.getElementById("migrant").checked = false;
+        document.getElementById("migrant").disabled = true;
+        document.getElementById("foster").checked = false;
+        document.getElementById("foster").disabled = true;
+    };
+
+    if (document.getElementById("no_status").checked == false) {
+        document.getElementById("homeless").disabled = false;
+        document.getElementById("runaway").disabled = false;
+        document.getElementById("migrant").disabled = false;
+        document.getElementById("foster").disabled = false;
+    };
+};
+
+function streamlined_cert_result() {    
+    streamlined_cert_questions_responses = [];
+    document.getElementById("result").innerHTML = "";
+    
+    for (question in streamlined_cert_questions) {
+        get_responses(streamlined_cert_questions[question]);
+    };
+
+    var all_responses = new Array();
+    for (response in screen_questions_responses) {
+        all_responses.push(screen_questions_responses[response]);
+    };
+    for (response in streamlined_cert_questions_responses) {
+        all_responses.push(streamlined_cert_questions_responses[response]);
+    };
+
+    switch (true) {
+        case streamlined_cert_questions_responses.includes("no_programs") && streamlined_cert_questions_responses.includes("no_status"):
+            switch (true) {
+                case screen_questions_responses.includes("not_in_school"):
+                    document.getElementById("result").innerHTML = "Your child is not eligible for Summer EBT. Children who are not enrolled in a school participating in the School Breakfast Program or National School Lunch Program; not participating in SNAP, TANF, FDPIR, Medicaid; and not identified as homeless, migrant, runaway, or foster youth are not eligible for Summer EBT.";
+                    document.getElementById("result").scrollIntoView({behavior: "smooth"});
+                    break;
+                case screen_questions_responses.includes("in_school") && streamlined_cert_questions_responses.includes("app_paid_eligibility"):
+                    document.getElementById("result").innerHTML = '<p>Your child is not eligible for Summer EBT. Children who are enrolled in school; not participating in SNAP, TANF, FDPIR, Medicaid, or Head Start; not identified as homeless, migrant, runaway, or foster youth; and not eligible for free or reduced-price meals by application are not eligible for Summer EBT. However, if your income is currently at or below the maximum income for Summer EBT eligibility, your child may be eligible for Summer EBT by completing the Summer EBT application. You can check the maximum income for Summer EBT by clicking on the link below:</p><p><a href="https://bestpractices.nokidhungry.org/resource/sebt-income-eligibility-guidelines" target="_new">No Kid Hungry Summer EBT Income Eligibility Guidelines</a></p>';
+                    break;
+                case (screen_questions_responses.includes("in_school") && streamlined_cert_questions_responses.includes("app_free_eligibility") || screen_questions_responses.includes("in_school") && streamlined_cert_questions_responses.includes("app_reduced_price_eligibility")):
+                    document.getElementById("result").innerHTML = "Your child is eligible to automatically receive Summer EBT benefits without completing an application because of their free or reduced-price school meal status as determined by the school meal application. You do not need to complete an application for Summer EBT.";
+                    break;
+                default:
+                    document.getElementById("result").innerHTML = '<p>Your child may be eligible for Summer EBT. You must apply for these benefits. Children whose households are at or below the maximum income for Summer EBT eligibility are eligible to receive Summer EBT. You can check the maximum income for Summer EBT by clicking on the link below:</p><p><a href="https://bestpractices.nokidhungry.org/resource/sebt-income-eligibility-guidelines" target="_new">No Kid Hungry Summer EBT Income Eligibility Guidelines</a></p>';
+                    break;
+            };
+            break;
+        case (streamlined_cert_questions_responses.includes("snap") || streamlined_cert_questions_responses.includes("tanf") || streamlined_cert_questions_responses.includes("fdpir") || streamlined_cert_questions_responses.includes("head_start")):
+            document.getElementById("result").innerHTML = "Your child is eligible to automatically receive Summer EBT benefits without completing an application because of their enrollment in SNAP, TANF, FDPIR, or a Head Start program. You do not need to complete an application for Summer EBT.";
+            break;
+        case (streamlined_cert_questions_responses.includes("homeless") || streamlined_cert_questions_responses.includes("migrant") || streamlined_cert_questions_responses.includes("runaway") || streamlined_cert_questions_responses.includes("foster")):
+            document.getElementById("result").innerHTML = "Your child is eligible to automatically receive Summer EBT benefits without completing an application because of their identification as homeless, runaway, migrant, or foster youth. You do not need to complete an application for Summer EBT.";
+            break;
+        case (
+            all_responses.length == 5 && 
+            (
+                (all_responses.includes("in_school") && (all_responses.includes("compulsory_age") || all_responses.includes("not_compulsory_age")) && all_responses.includes("medicaid") && all_responses.includes("no_status") && (all_responses.includes("app_free_eligibility") || all_responses.includes("app_reduced_price_eligibility"))) || 
+                (all_responses.includes("not_in_school") && all_responses.includes("compulsory_age") && all_responses.includes("medicaid") && all_responses.includes("no_status") && all_responses.includes("app_na"))
+            )
+            ):
+            document.getElementById("result").innerHTML = "Your child is eligible to automatically receive Summer EBT benefits without completing an application because of their participation in Medicaid and has free or reduced-price school meal status. You do not need to complete an application for Summer EBT.";
+            break;
+        default:
+            document.getElementById("result").innerHTML = "Your child may be eligible for Summer EBT. You must apply for these benefits. Children whose households are at or below 185% FPL are eligible to receive Summer EBT.";
+            break;
+    };
+
+    document.getElementById("result").scrollIntoView({behavior: "smooth"});
+};
+
+function reset() {
+    screen_questions_responses = [];
+    streamlined_cert_questions_responses = [];
+    document.getElementById("result").innerHTML = "";
+    for (element in document.getElementsByTagName("input")) {
+        document.getElementsByTagName("input")[element].checked = false;
+    };
+    document.getElementById("streamlined_cert_needed").style.display = "none";
+    for (element in document.getElementsByClassName("streamlined_cert")) {
+        document.getElementsByClassName("streamlined_cert")[element].style.display = "none";
+    };
+    // for (i = 0; i < document.getElementsByClassName("screen"); i++) {
+    //     document.getElementById[screen_questions[i]].checked = false;
+    // };
+    // for (i = 0; i < streamlined_cert_elements.length; i++) {
+    //     streamlined_cert_elements[i].style.display = "none";
+    // };
+};
+
+// add event listeners
+document.getElementById("reset").addEventListener("click", reset);
+
+document.getElementById("btn_check_eligibility").addEventListener("click", screen_questions_result);
+
+document.getElementById("no_programs").addEventListener("click", disable_other_options);
+document.getElementById("no_status").addEventListener("click", disable_other_options);
+document.getElementById("btn_streamlined_cert").addEventListener("click", streamlined_cert_result);
+
+// NEED TO REPRODUCE SCREEN_QUESTIONS_RESULT() FOR SC AND INCOME
+
+// function screen_questions_get_responses(question) {
+//     var radioButtonGroup = document.getElementsByName(question);
+//     var checkedRadio = Array.from(radioButtonGroup).find(
+//         (radio) => radio.checked
+//         );
+//     if (checkedRadio === void 0) {
+//     } else {
+//         screen_questions_responses.push(checkedRadio.value);
+//     };
+// };
+
+
+
+// function screen_questions_result() {
+//     for (question in screen_questions) {
+//         screen_questions_get_responses(screen_questions[question]);
+//     };
+//     var screen_questions_responses_complete = screen_questions_responses.length == screen_questions.length ? true : false;
+//     if (screen_questions_responses_complete == true) {
+//         switch (true) {
+//             case screen_questions_responses.includes("not_in_school") && screen_questions_responses.includes("not_compulsory_age"):
+//                 document.getElementById("result").innerHTML = "Your child is not eligible for Summer EBT. Children who are not enrolled in school and not between the ages of 6 and 17 are not eligible for Summer EBT.";
+//                 break;
+//             default:
+//                 document.getElementById("streamlined_cert_needed").style.display = "block";
+//                 for (i = 0; i < streamlined_cert_elements.length; i++) {
+//                     streamlined_cert_elements[i].style.display = "block";
+//                 };
+//                 break;
+//         };
+//     };
+// };
+
+// function create_child_programs_list_selection() {
+//     for (program in child_programs_list_collection) {
+//         if (child_programs_list_collection[program].checked == true && child_programs_list_collection[program].value != "no_programs") {
+//             child_programs_list_selected.push(child_programs_list_collection[program].value);
+//         };
+//     };
+// };
+
+// function create_child_status_list_selection() {
+//     for (status in child_status_list_collection) {
+//         if (child_status_list_collection[status].checked == true && child_status_list_collection[status].value != "no_status") {
+//             child_status_list_selected.push(child_status_list_collection[status].value);
+//         };
+//     };
+// };
+
+// function get_child_free_reduced_eligibility() {
+//     var radioButtonGroup = document.getElementsByName("child_free_reduced_eligibility");
+//     var checkedRadio = Array.from(radioButtonGroup).find(
+//         (radio) => radio.checked
+//         );
+//     if (checkedRadio === void 0) {
+//     } else {
+//         child_free_reduced_eligibility_value = checkedRadio.value;
+//     };
+// };
+
+</script>
+
+</html>
