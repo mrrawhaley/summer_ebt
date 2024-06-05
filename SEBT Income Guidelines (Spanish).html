@@ -1,0 +1,487 @@
+<html>
+<head>
+    <title>Las pautas de elegibilidad de ingresos del EBT de verano - 2024</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <style>
+        #incomeGuidelines, #incomeGuidelinesPlainLanguage {
+            display: none;
+        }
+
+        /* @font-face {
+            font-family: 'Montserrat', sans-serif;
+            src: url(https://fonts.google.com/specimen/Montserrat);
+        } */
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <p>
+        Las pautas de elegibilidad de ingresos del EBT de verano (Summer EBT o SUN Bucks) le mostrarán el límite de ingreso familiar que califica para acceder a los beneficios del EBT de verano, si debe solicitarlos (185% del nivel federal de pobreza). (Muchas familias recibirán el EBT de verano automáticamente, sin necesidad de presentar una solicitud. Para determinar si usted necesita solicitar los beneficios, por favor <a href="https://www.fns.usda.gov/es/summer/sunbucks">revise la información sobre elegibilidad para su estado aquí</a>.) Si su hijo NO recibe los beneficios de EBT de verano automáticamente, usted necesita solicitarlos.
+        
+        Ingrese el estado/territorio de residencia de su hijo y el número de personas en el hogar para ver los límites máximos de ingresos para el EBT de verano para su hogar.
+    </p>
+    <p>
+        Estas pautas de elegibilidad de ingresos están vigentes desde el 1 de julio de 2023 hasta el 30 de junio de 2024.
+    </p>
+    <div id="criteria">
+        Estado: <select id="state" onchange="updateSEBTamount()">
+            <option value="(not AK or HI)" selected>Alabama</option>
+            <option value="AK">Alaska</option>
+            <option value="(not AK or HI)">Arizona</option>
+            <option value="(not AK or HI)">Arkansas</option>
+            <option value="(not AK or HI)">California</option>
+            <option value="(not AK or HI)">Colorado</option>
+            <option value="(not AK or HI)">Connecticut</option>
+            <option value="(not AK or HI)">Delaware</option>
+            <option value="(not AK or HI)">Distrito de Columbia</option>
+            <option value="(not AK or HI)">Florida</option>
+            <option value="(not AK or HI)">Georgia</option>
+            <option value="HI">Hawaii</option>
+            <option value="(not AK or HI)">Idaho</option>
+            <option value="(not AK or HI)">Illinois</option>
+            <option value="(not AK or HI)">Indiana</option>
+            <option value="(not AK or HI)">Iowa</option>
+            <option value="(not AK or HI)">Kansas</option>
+            <option value="(not AK or HI)">Kentucky</option>
+            <option value="(not AK or HI)">Louisiana</option>
+            <option value="(not AK or HI)">Maine</option>
+            <option value="(not AK or HI)">Maryland</option>
+            <option value="(not AK or HI)">Massachusetts</option>
+            <option value="(not AK or HI)">Michigan</option>
+            <option value="(not AK or HI)">Minnesota</option>
+            <option value="(not AK or HI)">Mississippi</option>
+            <option value="(not AK or HI)">Missouri</option>
+            <option value="(not AK or HI)">Montana</option>
+            <option value="(not AK or HI)">Nebraska</option>
+            <option value="(not AK or HI)">Nevada</option>
+            <option value="(not AK or HI)">New Hampshire</option>
+            <option value="(not AK or HI)">New Jersey</option>
+            <option value="(not AK or HI)">New Mexico</option>
+            <option value="(not AK or HI)">New York</option>
+            <option value="(not AK or HI)">North Carolina</option>
+            <option value="(not AK or HI)">North Dakota</option>
+            <option value="(not AK or HI)">Ohio</option>
+            <option value="(not AK or HI)">Oklahoma</option>
+            <option value="(not AK or HI)">Oregon</option>
+            <option value="(not AK or HI)">Pennsylvania</option>
+            <option value="(not AK or HI)">Rhode Island</option>
+            <option value="(not AK or HI)">South Carolina</option>
+            <option value="(not AK or HI)">South Dakota</option>
+            <option value="(not AK or HI)">Tennessee</option>
+            <option value="(not AK or HI)">Texas</option>
+            <option value="(not AK or HI)">Utah</option>
+            <option value="(not AK or HI)">Vermont</option>
+            <option value="(not AK or HI)">Virginia</option>
+            <option value="(not AK or HI)">Washington</option>
+            <option value="(not AK or HI)">West Virginia</option>
+            <option value="(not AK or HI)">Wisconsin</option>
+            <option value="(not AK or HI)">Wyoming</option>            
+          </select><br/>
+          Número de personas en el hogar: <select id="householdSize" onchange="updateSEBTamount()">
+            <option value="0" selected>Seleccione un número</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>            
+          </select><br/>
+    </div>
+    <br/>
+    <div id="incomeGuidelines">
+        <table border="1" cellpadding="1" cellspacing="1" style="width:500px">
+            <thead>
+                <tr>
+                    <th scope="col">Anual</th>
+                    <th scope="col">Mensual</th>
+                    <th scope="col">Dos veces al mes</th>
+                    <th scope="col">Cada quincena</th>
+                    <th scope="col">Cada semana</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="annualIncomeGuideline"></td>
+                    <td id="monthlyIncomeGuideline"></td>
+                    <td id="bimonthlyIncomeGuideline"></td>
+                    <td id="biweeklyIncomeGuideline"></td>
+                    <td id="weeklyIncomeGuideline"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="incomeGuidelinesPlainLanguage">
+        <p>
+            Su hogar puede calificar para el EBT de verano si su ingreso no es más de <span id="annualIncomePlainLanguage"></span> anualmente, <span id="monthlyIncomePlainLanguage"></span> mensualmente, <span id="bimonthlyIncomePlainLanguage"></span> dos veces al mes, <span id="biweeklyIncomePlainLanguage"></span> cada quincena, o <span id="weeklyIncomePlainLanguage"></span> cada semana.
+        </p>
+    </div>
+</body>
+<script type="text/javascript">
+    const incomeEligibilityGuidelines = [{"state":"(not AK or HI)","householdSize":"1","incomeFrequency":"Annual","fpl":"185","amount":"26973"},
+{"state":"(not AK or HI)","householdSize":"1","incomeFrequency":"Monthly","fpl":"185","amount":"2248"},
+{"state":"(not AK or HI)","householdSize":"1","incomeFrequency":"Twice per Month","fpl":"185","amount":"1124"},
+{"state":"(not AK or HI)","householdSize":"1","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"1038"},
+{"state":"(not AK or HI)","householdSize":"1","incomeFrequency":"Weekly","fpl":"185","amount":"519"},
+{"state":"(not AK or HI)","householdSize":"1","incomeFrequency":"Annual","fpl":"130","amount":"18954"},
+{"state":"(not AK or HI)","householdSize":"1","incomeFrequency":"Monthly","fpl":"130","amount":"1580"},
+{"state":"(not AK or HI)","householdSize":"1","incomeFrequency":"Twice per Month","fpl":"130","amount":"790"},
+{"state":"(not AK or HI)","householdSize":"1","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"729"},
+{"state":"(not AK or HI)","householdSize":"1","incomeFrequency":"Weekly","fpl":"130","amount":"365"},
+{"state":"(not AK or HI)","householdSize":"2","incomeFrequency":"Annual","fpl":"185","amount":"36482"},
+{"state":"(not AK or HI)","householdSize":"2","incomeFrequency":"Monthly","fpl":"185","amount":"3041"},
+{"state":"(not AK or HI)","householdSize":"2","incomeFrequency":"Twice per Month","fpl":"185","amount":"1521"},
+{"state":"(not AK or HI)","householdSize":"2","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"1404"},
+{"state":"(not AK or HI)","householdSize":"2","incomeFrequency":"Weekly","fpl":"185","amount":"702"},
+{"state":"(not AK or HI)","householdSize":"2","incomeFrequency":"Annual","fpl":"130","amount":"25636"},
+{"state":"(not AK or HI)","householdSize":"2","incomeFrequency":"Monthly","fpl":"130","amount":"2137"},
+{"state":"(not AK or HI)","householdSize":"2","incomeFrequency":"Twice per Month","fpl":"130","amount":"1069"},
+{"state":"(not AK or HI)","householdSize":"2","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"986"},
+{"state":"(not AK or HI)","householdSize":"2","incomeFrequency":"Weekly","fpl":"130","amount":"493"},
+{"state":"(not AK or HI)","householdSize":"3","incomeFrequency":"Annual","fpl":"185","amount":"45991"},
+{"state":"(not AK or HI)","householdSize":"3","incomeFrequency":"Monthly","fpl":"185","amount":"3833"},
+{"state":"(not AK or HI)","householdSize":"3","incomeFrequency":"Twice per Month","fpl":"185","amount":"1917"},
+{"state":"(not AK or HI)","householdSize":"3","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"1769"},
+{"state":"(not AK or HI)","householdSize":"3","incomeFrequency":"Weekly","fpl":"185","amount":"885"},
+{"state":"(not AK or HI)","householdSize":"3","incomeFrequency":"Annual","fpl":"130","amount":"32318"},
+{"state":"(not AK or HI)","householdSize":"3","incomeFrequency":"Monthly","fpl":"130","amount":"2694"},
+{"state":"(not AK or HI)","householdSize":"3","incomeFrequency":"Twice per Month","fpl":"130","amount":"1347"},
+{"state":"(not AK or HI)","householdSize":"3","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"1243"},
+{"state":"(not AK or HI)","householdSize":"3","incomeFrequency":"Weekly","fpl":"130","amount":"622"},
+{"state":"(not AK or HI)","householdSize":"4","incomeFrequency":"Annual","fpl":"185","amount":"55500"},
+{"state":"(not AK or HI)","householdSize":"4","incomeFrequency":"Monthly","fpl":"185","amount":"4625"},
+{"state":"(not AK or HI)","householdSize":"4","incomeFrequency":"Twice per Month","fpl":"185","amount":"2313"},
+{"state":"(not AK or HI)","householdSize":"4","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"2135"},
+{"state":"(not AK or HI)","householdSize":"4","incomeFrequency":"Weekly","fpl":"185","amount":"1068"},
+{"state":"(not AK or HI)","householdSize":"4","incomeFrequency":"Annual","fpl":"130","amount":"39000"},
+{"state":"(not AK or HI)","householdSize":"4","incomeFrequency":"Monthly","fpl":"130","amount":"3250"},
+{"state":"(not AK or HI)","householdSize":"4","incomeFrequency":"Twice per Month","fpl":"130","amount":"1625"},
+{"state":"(not AK or HI)","householdSize":"4","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"1500"},
+{"state":"(not AK or HI)","householdSize":"4","incomeFrequency":"Weekly","fpl":"130","amount":"750"},
+{"state":"(not AK or HI)","householdSize":"5","incomeFrequency":"Annual","fpl":"185","amount":"65009"},
+{"state":"(not AK or HI)","householdSize":"5","incomeFrequency":"Monthly","fpl":"185","amount":"5418"},
+{"state":"(not AK or HI)","householdSize":"5","incomeFrequency":"Twice per Month","fpl":"185","amount":"2709"},
+{"state":"(not AK or HI)","householdSize":"5","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"2501"},
+{"state":"(not AK or HI)","householdSize":"5","incomeFrequency":"Weekly","fpl":"185","amount":"1251"},
+{"state":"(not AK or HI)","householdSize":"5","incomeFrequency":"Annual","fpl":"130","amount":"45682"},
+{"state":"(not AK or HI)","householdSize":"5","incomeFrequency":"Monthly","fpl":"130","amount":"3807"},
+{"state":"(not AK or HI)","householdSize":"5","incomeFrequency":"Twice per Month","fpl":"130","amount":"1904"},
+{"state":"(not AK or HI)","householdSize":"5","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"1757"},
+{"state":"(not AK or HI)","householdSize":"5","incomeFrequency":"Weekly","fpl":"130","amount":"879"},
+{"state":"(not AK or HI)","householdSize":"6","incomeFrequency":"Annual","fpl":"185","amount":"74518"},
+{"state":"(not AK or HI)","householdSize":"6","incomeFrequency":"Monthly","fpl":"185","amount":"6210"},
+{"state":"(not AK or HI)","householdSize":"6","incomeFrequency":"Twice per Month","fpl":"185","amount":"3105"},
+{"state":"(not AK or HI)","householdSize":"6","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"2867"},
+{"state":"(not AK or HI)","householdSize":"6","incomeFrequency":"Weekly","fpl":"185","amount":"1434"},
+{"state":"(not AK or HI)","householdSize":"6","incomeFrequency":"Annual","fpl":"130","amount":"52364"},
+{"state":"(not AK or HI)","householdSize":"6","incomeFrequency":"Monthly","fpl":"130","amount":"4364"},
+{"state":"(not AK or HI)","householdSize":"6","incomeFrequency":"Twice per Month","fpl":"130","amount":"2182"},
+{"state":"(not AK or HI)","householdSize":"6","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"2014"},
+{"state":"(not AK or HI)","householdSize":"6","incomeFrequency":"Weekly","fpl":"130","amount":"1007"},
+{"state":"(not AK or HI)","householdSize":"7","incomeFrequency":"Annual","fpl":"185","amount":"84027"},
+{"state":"(not AK or HI)","householdSize":"7","incomeFrequency":"Monthly","fpl":"185","amount":"7003"},
+{"state":"(not AK or HI)","householdSize":"7","incomeFrequency":"Twice per Month","fpl":"185","amount":"3502"},
+{"state":"(not AK or HI)","householdSize":"7","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"3232"},
+{"state":"(not AK or HI)","householdSize":"7","incomeFrequency":"Weekly","fpl":"185","amount":"1616"},
+{"state":"(not AK or HI)","householdSize":"7","incomeFrequency":"Annual","fpl":"130","amount":"59046"},
+{"state":"(not AK or HI)","householdSize":"7","incomeFrequency":"Monthly","fpl":"130","amount":"4921"},
+{"state":"(not AK or HI)","householdSize":"7","incomeFrequency":"Twice per Month","fpl":"130","amount":"2461"},
+{"state":"(not AK or HI)","householdSize":"7","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"2271"},
+{"state":"(not AK or HI)","householdSize":"7","incomeFrequency":"Weekly","fpl":"130","amount":"1136"},
+{"state":"(not AK or HI)","householdSize":"8","incomeFrequency":"Annual","fpl":"185","amount":"93536"},
+{"state":"(not AK or HI)","householdSize":"8","incomeFrequency":"Monthly","fpl":"185","amount":"7795"},
+{"state":"(not AK or HI)","householdSize":"8","incomeFrequency":"Twice per Month","fpl":"185","amount":"3898"},
+{"state":"(not AK or HI)","householdSize":"8","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"3598"},
+{"state":"(not AK or HI)","householdSize":"8","incomeFrequency":"Weekly","fpl":"185","amount":"1799"},
+{"state":"(not AK or HI)","householdSize":"8","incomeFrequency":"Annual","fpl":"130","amount":"65728"},
+{"state":"(not AK or HI)","householdSize":"8","incomeFrequency":"Monthly","fpl":"130","amount":"5478"},
+{"state":"(not AK or HI)","householdSize":"8","incomeFrequency":"Twice per Month","fpl":"130","amount":"2739"},
+{"state":"(not AK or HI)","householdSize":"8","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"2528"},
+{"state":"(not AK or HI)","householdSize":"8","incomeFrequency":"Weekly","fpl":"130","amount":"1264"},
+{"state":"AK","householdSize":"1","incomeFrequency":"Annual","fpl":"185","amount":"33689"},
+{"state":"AK","householdSize":"1","incomeFrequency":"Monthly","fpl":"185","amount":"2808"},
+{"state":"AK","householdSize":"1","incomeFrequency":"Twice per Month","fpl":"185","amount":"1404"},
+{"state":"AK","householdSize":"1","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"1296"},
+{"state":"AK","householdSize":"1","incomeFrequency":"Weekly","fpl":"185","amount":"648"},
+{"state":"AK","householdSize":"1","incomeFrequency":"Annual","fpl":"130","amount":"23673"},
+{"state":"AK","householdSize":"1","incomeFrequency":"Monthly","fpl":"130","amount":"1973"},
+{"state":"AK","householdSize":"1","incomeFrequency":"Twice per Month","fpl":"130","amount":"987"},
+{"state":"AK","householdSize":"1","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"911"},
+{"state":"AK","householdSize":"1","incomeFrequency":"Weekly","fpl":"130","amount":"456"},
+{"state":"AK","householdSize":"2","incomeFrequency":"Annual","fpl":"185","amount":"45584"},
+{"state":"AK","householdSize":"2","incomeFrequency":"Monthly","fpl":"185","amount":"3799"},
+{"state":"AK","householdSize":"2","incomeFrequency":"Twice per Month","fpl":"185","amount":"1900"},
+{"state":"AK","householdSize":"2","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"1754"},
+{"state":"AK","householdSize":"2","incomeFrequency":"Weekly","fpl":"185","amount":"877"},
+{"state":"AK","householdSize":"2","incomeFrequency":"Annual","fpl":"130","amount":"32032"},
+{"state":"AK","householdSize":"2","incomeFrequency":"Monthly","fpl":"130","amount":"2670"},
+{"state":"AK","householdSize":"2","incomeFrequency":"Twice per Month","fpl":"130","amount":"1335"},
+{"state":"AK","householdSize":"2","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"1232"},
+{"state":"AK","householdSize":"2","incomeFrequency":"Weekly","fpl":"130","amount":"616"},
+{"state":"AK","householdSize":"3","incomeFrequency":"Annual","fpl":"185","amount":"57480"},
+{"state":"AK","householdSize":"3","incomeFrequency":"Monthly","fpl":"185","amount":"4790"},
+{"state":"AK","householdSize":"3","incomeFrequency":"Twice per Month","fpl":"185","amount":"2395"},
+{"state":"AK","householdSize":"3","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"2211"},
+{"state":"AK","householdSize":"3","incomeFrequency":"Weekly","fpl":"185","amount":"1106"},
+{"state":"AK","householdSize":"3","incomeFrequency":"Annual","fpl":"130","amount":"40391"},
+{"state":"AK","householdSize":"3","incomeFrequency":"Monthly","fpl":"130","amount":"3366"},
+{"state":"AK","householdSize":"3","incomeFrequency":"Twice per Month","fpl":"130","amount":"1683"},
+{"state":"AK","householdSize":"3","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"1554"},
+{"state":"AK","householdSize":"3","incomeFrequency":"Weekly","fpl":"130","amount":"777"},
+{"state":"AK","householdSize":"4","incomeFrequency":"Annual","fpl":"185","amount":"69375"},
+{"state":"AK","householdSize":"4","incomeFrequency":"Monthly","fpl":"185","amount":"5782"},
+{"state":"AK","householdSize":"4","incomeFrequency":"Twice per Month","fpl":"185","amount":"2891"},
+{"state":"AK","householdSize":"4","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"2669"},
+{"state":"AK","householdSize":"4","incomeFrequency":"Weekly","fpl":"185","amount":"1335"},
+{"state":"AK","householdSize":"4","incomeFrequency":"Annual","fpl":"130","amount":"48750"},
+{"state":"AK","householdSize":"4","incomeFrequency":"Monthly","fpl":"130","amount":"4063"},
+{"state":"AK","householdSize":"4","incomeFrequency":"Twice per Month","fpl":"130","amount":"2032"},
+{"state":"AK","householdSize":"4","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"1875"},
+{"state":"AK","householdSize":"4","incomeFrequency":"Weekly","fpl":"130","amount":"938"},
+{"state":"AK","householdSize":"5","incomeFrequency":"Annual","fpl":"185","amount":"81271"},
+{"state":"AK","householdSize":"5","incomeFrequency":"Monthly","fpl":"185","amount":"6773"},
+{"state":"AK","householdSize":"5","incomeFrequency":"Twice per Month","fpl":"185","amount":"3387"},
+{"state":"AK","householdSize":"5","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"3126"},
+{"state":"AK","householdSize":"5","incomeFrequency":"Weekly","fpl":"185","amount":"1563"},
+{"state":"AK","householdSize":"5","incomeFrequency":"Annual","fpl":"130","amount":"57109"},
+{"state":"AK","householdSize":"5","incomeFrequency":"Monthly","fpl":"130","amount":"4760"},
+{"state":"AK","householdSize":"5","incomeFrequency":"Twice per Month","fpl":"130","amount":"2380"},
+{"state":"AK","householdSize":"5","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"2197"},
+{"state":"AK","householdSize":"5","incomeFrequency":"Weekly","fpl":"130","amount":"1099"},
+{"state":"AK","householdSize":"6","incomeFrequency":"Annual","fpl":"185","amount":"93166"},
+{"state":"AK","householdSize":"6","incomeFrequency":"Monthly","fpl":"185","amount":"7764"},
+{"state":"AK","householdSize":"6","incomeFrequency":"Twice per Month","fpl":"185","amount":"3882"},
+{"state":"AK","householdSize":"6","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"3584"},
+{"state":"AK","householdSize":"6","incomeFrequency":"Weekly","fpl":"185","amount":"1792"},
+{"state":"AK","householdSize":"6","incomeFrequency":"Annual","fpl":"130","amount":"65468"},
+{"state":"AK","householdSize":"6","incomeFrequency":"Monthly","fpl":"130","amount":"5456"},
+{"state":"AK","householdSize":"6","incomeFrequency":"Twice per Month","fpl":"130","amount":"2728"},
+{"state":"AK","householdSize":"6","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"2518"},
+{"state":"AK","householdSize":"6","incomeFrequency":"Weekly","fpl":"130","amount":"1259"},
+{"state":"AK","householdSize":"7","incomeFrequency":"Annual","fpl":"185","amount":"105062"},
+{"state":"AK","householdSize":"7","incomeFrequency":"Monthly","fpl":"185","amount":"8756"},
+{"state":"AK","householdSize":"7","incomeFrequency":"Twice per Month","fpl":"185","amount":"4378"},
+{"state":"AK","householdSize":"7","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"4041"},
+{"state":"AK","householdSize":"7","incomeFrequency":"Weekly","fpl":"185","amount":"2021"},
+{"state":"AK","householdSize":"7","incomeFrequency":"Annual","fpl":"130","amount":"73827"},
+{"state":"AK","householdSize":"7","incomeFrequency":"Monthly","fpl":"130","amount":"6153"},
+{"state":"AK","householdSize":"7","incomeFrequency":"Twice per Month","fpl":"130","amount":"3077"},
+{"state":"AK","householdSize":"7","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"2840"},
+{"state":"AK","householdSize":"7","incomeFrequency":"Weekly","fpl":"130","amount":"1420"},
+{"state":"AK","householdSize":"8","incomeFrequency":"Annual","fpl":"185","amount":"116957"},
+{"state":"AK","householdSize":"8","incomeFrequency":"Monthly","fpl":"185","amount":"9747"},
+{"state":"AK","householdSize":"8","incomeFrequency":"Twice per Month","fpl":"185","amount":"4874"},
+{"state":"AK","householdSize":"8","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"4499"},
+{"state":"AK","householdSize":"8","incomeFrequency":"Weekly","fpl":"185","amount":"2250"},
+{"state":"AK","householdSize":"8","incomeFrequency":"Annual","fpl":"130","amount":"82186"},
+{"state":"AK","householdSize":"8","incomeFrequency":"Monthly","fpl":"130","amount":"6849"},
+{"state":"AK","householdSize":"8","incomeFrequency":"Twice per Month","fpl":"130","amount":"3425"},
+{"state":"AK","householdSize":"8","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"3161"},
+{"state":"AK","householdSize":"8","incomeFrequency":"Weekly","fpl":"130","amount":"1581"},
+{"state":"HI","householdSize":"1","incomeFrequency":"Annual","fpl":"185","amount":"31025"},
+{"state":"HI","householdSize":"1","incomeFrequency":"Monthly","fpl":"185","amount":"2586"},
+{"state":"HI","householdSize":"1","incomeFrequency":"Twice per Month","fpl":"185","amount":"1293"},
+{"state":"HI","householdSize":"1","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"1194"},
+{"state":"HI","householdSize":"1","incomeFrequency":"Weekly","fpl":"185","amount":"597"},
+{"state":"HI","householdSize":"1","incomeFrequency":"Annual","fpl":"130","amount":"21801"},
+{"state":"HI","householdSize":"1","incomeFrequency":"Monthly","fpl":"130","amount":"1817"},
+{"state":"HI","householdSize":"1","incomeFrequency":"Twice per Month","fpl":"130","amount":"909"},
+{"state":"HI","householdSize":"1","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"839"},
+{"state":"HI","householdSize":"1","incomeFrequency":"Weekly","fpl":"130","amount":"420"},
+{"state":"HI","householdSize":"2","incomeFrequency":"Annual","fpl":"185","amount":"41958"},
+{"state":"HI","householdSize":"2","incomeFrequency":"Monthly","fpl":"185","amount":"3497"},
+{"state":"HI","householdSize":"2","incomeFrequency":"Twice per Month","fpl":"185","amount":"1749"},
+{"state":"HI","householdSize":"2","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"1614"},
+{"state":"HI","householdSize":"2","incomeFrequency":"Weekly","fpl":"185","amount":"807"},
+{"state":"HI","householdSize":"2","incomeFrequency":"Annual","fpl":"130","amount":"29484"},
+{"state":"HI","householdSize":"2","incomeFrequency":"Monthly","fpl":"130","amount":"2457"},
+{"state":"HI","householdSize":"2","incomeFrequency":"Twice per Month","fpl":"130","amount":"1229"},
+{"state":"HI","householdSize":"2","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"1134"},
+{"state":"HI","householdSize":"2","incomeFrequency":"Weekly","fpl":"130","amount":"567"},
+{"state":"HI","householdSize":"3","incomeFrequency":"Annual","fpl":"185","amount":"52892"},
+{"state":"HI","householdSize":"3","incomeFrequency":"Monthly","fpl":"185","amount":"4408"},
+{"state":"HI","householdSize":"3","incomeFrequency":"Twice per Month","fpl":"185","amount":"2204"},
+{"state":"HI","householdSize":"3","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"2035"},
+{"state":"HI","householdSize":"3","incomeFrequency":"Weekly","fpl":"185","amount":"1018"},
+{"state":"HI","householdSize":"3","incomeFrequency":"Annual","fpl":"130","amount":"37167"},
+{"state":"HI","householdSize":"3","incomeFrequency":"Monthly","fpl":"130","amount":"3098"},
+{"state":"HI","householdSize":"3","incomeFrequency":"Twice per Month","fpl":"130","amount":"1549"},
+{"state":"HI","householdSize":"3","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"1430"},
+{"state":"HI","householdSize":"3","incomeFrequency":"Weekly","fpl":"130","amount":"715"},
+{"state":"HI","householdSize":"4","incomeFrequency":"Annual","fpl":"185","amount":"63825"},
+{"state":"HI","householdSize":"4","incomeFrequency":"Monthly","fpl":"185","amount":"5319"},
+{"state":"HI","householdSize":"4","incomeFrequency":"Twice per Month","fpl":"185","amount":"2660"},
+{"state":"HI","householdSize":"4","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"2455"},
+{"state":"HI","householdSize":"4","incomeFrequency":"Weekly","fpl":"185","amount":"1228"},
+{"state":"HI","householdSize":"4","incomeFrequency":"Annual","fpl":"130","amount":"44850"},
+{"state":"HI","householdSize":"4","incomeFrequency":"Monthly","fpl":"130","amount":"3738"},
+{"state":"HI","householdSize":"4","incomeFrequency":"Twice per Month","fpl":"130","amount":"1869"},
+{"state":"HI","householdSize":"4","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"1725"},
+{"state":"HI","householdSize":"4","incomeFrequency":"Weekly","fpl":"130","amount":"863"},
+{"state":"HI","householdSize":"5","incomeFrequency":"Annual","fpl":"185","amount":"74759"},
+{"state":"HI","householdSize":"5","incomeFrequency":"Monthly","fpl":"185","amount":"6230"},
+{"state":"HI","householdSize":"5","incomeFrequency":"Twice per Month","fpl":"185","amount":"3115"},
+{"state":"HI","householdSize":"5","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"2876"},
+{"state":"HI","householdSize":"5","incomeFrequency":"Weekly","fpl":"185","amount":"1438"},
+{"state":"HI","householdSize":"5","incomeFrequency":"Annual","fpl":"130","amount":"52533"},
+{"state":"HI","householdSize":"5","incomeFrequency":"Monthly","fpl":"130","amount":"4378"},
+{"state":"HI","householdSize":"5","incomeFrequency":"Twice per Month","fpl":"130","amount":"2189"},
+{"state":"HI","householdSize":"5","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"2021"},
+{"state":"HI","householdSize":"5","incomeFrequency":"Weekly","fpl":"130","amount":"1011"},
+{"state":"HI","householdSize":"6","incomeFrequency":"Annual","fpl":"185","amount":"85692"},
+{"state":"HI","householdSize":"6","incomeFrequency":"Monthly","fpl":"185","amount":"7141"},
+{"state":"HI","householdSize":"6","incomeFrequency":"Twice per Month","fpl":"185","amount":"3571"},
+{"state":"HI","householdSize":"6","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"3296"},
+{"state":"HI","householdSize":"6","incomeFrequency":"Weekly","fpl":"185","amount":"1648"},
+{"state":"HI","householdSize":"6","incomeFrequency":"Annual","fpl":"130","amount":"60216"},
+{"state":"HI","householdSize":"6","incomeFrequency":"Monthly","fpl":"130","amount":"5018"},
+{"state":"HI","householdSize":"6","incomeFrequency":"Twice per Month","fpl":"130","amount":"2509"},
+{"state":"HI","householdSize":"6","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"2316"},
+{"state":"HI","householdSize":"6","incomeFrequency":"Weekly","fpl":"130","amount":"1158"},
+{"state":"HI","householdSize":"7","incomeFrequency":"Annual","fpl":"185","amount":"96626"},
+{"state":"HI","householdSize":"7","incomeFrequency":"Monthly","fpl":"185","amount":"8053"},
+{"state":"HI","householdSize":"7","incomeFrequency":"Twice per Month","fpl":"185","amount":"4027"},
+{"state":"HI","householdSize":"7","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"3717"},
+{"state":"HI","householdSize":"7","incomeFrequency":"Weekly","fpl":"185","amount":"1859"},
+{"state":"HI","householdSize":"7","incomeFrequency":"Annual","fpl":"130","amount":"67899"},
+{"state":"HI","householdSize":"7","incomeFrequency":"Monthly","fpl":"130","amount":"5659"},
+{"state":"HI","householdSize":"7","incomeFrequency":"Twice per Month","fpl":"130","amount":"2830"},
+{"state":"HI","householdSize":"7","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"2612"},
+{"state":"HI","householdSize":"7","incomeFrequency":"Weekly","fpl":"130","amount":"1306"},
+{"state":"HI","householdSize":"8","incomeFrequency":"Annual","fpl":"185","amount":"107559"},
+{"state":"HI","householdSize":"8","incomeFrequency":"Monthly","fpl":"185","amount":"8964"},
+{"state":"HI","householdSize":"8","incomeFrequency":"Twice per Month","fpl":"185","amount":"4482"},
+{"state":"HI","householdSize":"8","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"4137"},
+{"state":"HI","householdSize":"8","incomeFrequency":"Weekly","fpl":"185","amount":"2069"},
+{"state":"HI","householdSize":"8","incomeFrequency":"Annual","fpl":"130","amount":"75582"},
+{"state":"HI","householdSize":"8","incomeFrequency":"Monthly","fpl":"130","amount":"6299"},
+{"state":"HI","householdSize":"8","incomeFrequency":"Twice per Month","fpl":"130","amount":"3150"},
+{"state":"HI","householdSize":"8","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"2907"},
+{"state":"HI","householdSize":"8","incomeFrequency":"Weekly","fpl":"130","amount":"1454"},
+{"state":"(not AK or HI)","householdSize":"additional","incomeFrequency":"Annual","fpl":"185","amount":"9509"},
+{"state":"(not AK or HI)","householdSize":"additional","incomeFrequency":"Monthly","fpl":"185","amount":"793"},
+{"state":"(not AK or HI)","householdSize":"additional","incomeFrequency":"Twice per Month","fpl":"185","amount":"397"},
+{"state":"(not AK or HI)","householdSize":"additional","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"366"},
+{"state":"(not AK or HI)","householdSize":"additional","incomeFrequency":"Weekly","fpl":"185","amount":"183"},
+{"state":"(not AK or HI)","householdSize":"additional","incomeFrequency":"Annual","fpl":"130","amount":"6682"},
+{"state":"(not AK or HI)","householdSize":"additional","incomeFrequency":"Monthly","fpl":"130","amount":"557"},
+{"state":"(not AK or HI)","householdSize":"additional","incomeFrequency":"Twice per Month","fpl":"130","amount":"279"},
+{"state":"(not AK or HI)","householdSize":"additional","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"257"},
+{"state":"(not AK or HI)","householdSize":"additional","incomeFrequency":"Weekly","fpl":"130","amount":"129"},
+{"state":"AK","householdSize":"additional","incomeFrequency":"Annual","fpl":"185","amount":"11896"},
+{"state":"AK","householdSize":"additional","incomeFrequency":"Monthly","fpl":"185","amount":"992"},
+{"state":"AK","householdSize":"additional","incomeFrequency":"Twice per Month","fpl":"185","amount":"496"},
+{"state":"AK","householdSize":"additional","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"458"},
+{"state":"AK","householdSize":"additional","incomeFrequency":"Weekly","fpl":"185","amount":"229"},
+{"state":"AK","householdSize":"additional","incomeFrequency":"Annual","fpl":"130","amount":"8359"},
+{"state":"AK","householdSize":"additional","incomeFrequency":"Monthly","fpl":"130","amount":"697"},
+{"state":"AK","householdSize":"additional","incomeFrequency":"Twice per Month","fpl":"130","amount":"349"},
+{"state":"AK","householdSize":"additional","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"322"},
+{"state":"AK","householdSize":"additional","incomeFrequency":"Weekly","fpl":"130","amount":"161"},
+{"state":"HI","householdSize":"additional","incomeFrequency":"Annual","fpl":"185","amount":"10934"},
+{"state":"HI","householdSize":"additional","incomeFrequency":"Monthly","fpl":"185","amount":"912"},
+{"state":"HI","householdSize":"additional","incomeFrequency":"Twice per Month","fpl":"185","amount":"456"},
+{"state":"HI","householdSize":"additional","incomeFrequency":"Every Two Weeks","fpl":"185","amount":"421"},
+{"state":"HI","householdSize":"additional","incomeFrequency":"Weekly","fpl":"185","amount":"211"},
+{"state":"HI","householdSize":"additional","incomeFrequency":"Annual","fpl":"130","amount":"7683"},
+{"state":"HI","householdSize":"additional","incomeFrequency":"Monthly","fpl":"130","amount":"641"},
+{"state":"HI","householdSize":"additional","incomeFrequency":"Twice per Month","fpl":"130","amount":"321"},
+{"state":"HI","householdSize":"additional","incomeFrequency":"Every Two Weeks","fpl":"130","amount":"296"},
+{"state":"HI","householdSize":"additional","incomeFrequency":"Weekly","fpl":"130","amount":"148"}];
+
+    function findIncomeRecord(state, householdSize, incomeFrequency, fpl) {
+        // Assuming income_eligibility_guidelines is your JSON object
+        for (let record of incomeEligibilityGuidelines) {
+            if (
+                record.state === state &&
+                record.householdSize === householdSize &&
+                record.incomeFrequency === incomeFrequency &&
+                record.fpl === fpl
+            ) {
+                return record;
+            }
+        }
+        return null; // Return null if no matching record is found
+    }
+
+    var incomeFrequencyLabels = ["Annual", "Monthly", "Twice per Month", "Every Two Weeks", "Weekly"];
+    var incomeFrequencyFieldLabels = ["annualIncomeGuideline", "monthlyIncomeGuideline", "bimonthlyIncomeGuideline", "biweeklyIncomeGuideline", "weeklyIncomeGuideline"];
+    var incomeGuidelinesPlainLanguageLabels = ["annualIncomePlainLanguage", "monthlyIncomePlainLanguage", "bimonthlyIncomePlainLanguage", "biweeklyIncomePlainLanguage", "weeklyIncomePlainLanguage"];
+
+    // Example usage:
+    function updateSEBTamount() {
+        var dollarFormat = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        });
+        var state = document.getElementById("state").value;
+        var householdSize = document.getElementById("householdSize").value;
+        var fpl = "185";
+
+        for (i = 0; i < 5; i++) {
+            var incomeFrequency = incomeFrequencyLabels[i];
+            
+            var foundRecord = findIncomeRecord(state, householdSize, incomeFrequency, fpl);
+            
+            switch(true) {
+                case householdSize == 0:
+                    document.getElementById("incomeGuidelines").style = "display: none";
+                    document.getElementById("incomeGuidelinesPlainLanguage").style = "display: none";
+                    // document.getElementById(incomeFrequencyFieldLabels[i]).innerHTML = "--";
+                    break;
+                case householdSize > 8:
+                    document.getElementById("incomeGuidelines").style = "display: inline";
+                    document.getElementById("incomeGuidelinesPlainLanguage").style = "display: inline";
+                    var hh8income = findIncomeRecord(state, "8", incomeFrequency, fpl);
+                    var addlAmtRecord = findIncomeRecord(state, "additional", incomeFrequency, fpl);
+                    var addlPersons = Number(householdSize) - 8;
+                    document.getElementById(incomeFrequencyFieldLabels[i]).innerHTML = dollarFormat.format(Number(hh8income.amount) + Number(addlAmtRecord.amount * addlPersons));
+                    document.getElementById(incomeGuidelinesPlainLanguageLabels[i]).innerHTML = dollarFormat.format(Number(hh8income.amount) + Number(addlAmtRecord.amount * addlPersons));
+                    break;
+                default:
+                    document.getElementById("incomeGuidelines").style = "display: inline";
+                    document.getElementById("incomeGuidelinesPlainLanguage").style = "display: inline";
+                    document.getElementById(incomeFrequencyFieldLabels[i]).innerHTML = dollarFormat.format(foundRecord.amount);
+                    document.getElementById(incomeGuidelinesPlainLanguageLabels[i]).innerHTML = dollarFormat.format(foundRecord.amount);
+                    break;
+            }
+            
+            // if (householdSize = 0) {
+            //     document.getElementById(incomeFrequencyFieldLabels[i]).innerHTML = "--";
+            // };
+            // if (householdSize < 9) {
+            //     document.getElementById(incomeFrequencyFieldLabels[i]).innerHTML = foundRecord.amount;
+            // } else {
+            //     var hh8income = findIncomeRecord(state, "8", incomeFrequency, fpl);
+            //     var addlAmtRecord = findIncomeRecord(state, "additional", incomeFrequency, fpl);
+            //     var addlPersons = Number(householdSize) - 8;
+            //     document.getElementById(incomeFrequencyFieldLabels[i]).innerHTML = Number(hh8income.amount) + (Number(addlAmtRecord.amount) * addlPersons);
+            // };
+        };
+    };
+</script>
+<style>
+    #incomeGuidelines, #incomeGuidelinesPlainLanguage {
+        display: none;
+    }
+</style>
+</html>
