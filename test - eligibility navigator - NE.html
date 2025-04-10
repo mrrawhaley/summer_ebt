@@ -1,0 +1,457 @@
+<html>
+
+    <head>
+
+        <style>
+            /* Container for the combo box */
+            .school_input_container {
+                position: relative;
+                /* width: 250px; */
+            }
+    
+            /*
+            Input field 
+            #combo-box {
+                width: 100%;
+                padding: 8px;
+                box-sizing: border-box;
+            }
+            */
+    
+            /* Dropdown list */
+            .school_dropdown {
+                position: absolute;
+                width: 75%;
+                border: 1px solid #ccc;
+                /* border-top: none; */
+                background: white;
+                max-height: 120px; /* Makes the list scrollable */
+                overflow-y: auto;
+                display: none;
+                z-index: 1000;
+            }
+    
+            /* Dropdown items */
+            .school_dropdown div {
+                padding: 8px;
+                cursor: pointer;
+            }
+    
+            .school_dropdown div:hover {
+                background-color: #f0f0f0;
+            }
+        </style>
+
+    </head>
+
+    <body>
+        <div id="introduction">
+            <!-- introductory text -->
+        </div>
+        <div id="question_navigator"></div>
+        <div id="eligibility_determination"></div>
+        <div id="navigation_buttons">
+            <input type="button" value="next question" onclick="question_order()" />
+        </div>
+    </body>
+
+</html>
+
+<script type = "text/javascript">
+
+    // create question_map variable - map of question codes and Question class objects
+    let question_map = new Map();
+
+    // create response_map variable - map of user responses to each question
+    let response_map = new Map();
+
+    // create outcome_map variable - map of outcomes for user responses
+    let outcome_map = new Map();
+
+    // create navigator_insertion variable - holds HTML element id of most recently inserted question to determine where to insert next question or message; initialized to start of navigator
+    var navigator_insertion = "question_navigator";
+
+    // create eligiblity_determined variable - if eligibility is determined, show determination and stop question flow
+    let eligiblity_determined = false;
+
+    // create Question class
+    class Question {
+        constructor(code, question, answers, answer_values, answer_type) {
+            this.code = code;
+            this.question = question;
+            this.answers = answers;
+            this.answer_values = answer_values;
+            this.answer_type = answer_type;
+        };
+
+        // other stuff for class
+    };
+
+    // create Outcome class
+    class Outcome {
+        constructor(code, outcome_text) {
+            this.code = code;
+            this.outcome_text = outcome_text;
+        };
+    };
+
+    // display_question: displays question and answer options
+    function display_question(code) {
+
+        let question_container = document.createElement("div");
+        question_container.id = code + "_div";
+
+        let question_paragraph = document.createElement("p");
+        question_paragraph.id = code + "_p";
+        
+        let question_display = question_map.get(code).question;
+
+        question_paragraph.innerHTML = question_display;
+
+        let answer_block = document.createElement("p");
+
+        let user_response;
+
+        // organize elements
+        question_container.appendChild(question_paragraph);
+        question_container.appendChild(answer_block);
+
+        let answers_display = question_map.get(code).answers;
+        let input_values = question_map.get(code).answer_values;
+
+        for (let i = 0; i < answers_display.length; i++) {
+            temp_input = document.createElement("input");
+            temp_input.type = question_map.get(code).answer_type;
+            temp_input.id = code + "_" + i.toString();
+            temp_input.name = code;
+            temp_input.value = input_values[i];
+            // console.log(temp_input.value);
+            // add event listener - if value = 0 then inputs in input group with value > 0 are unchecked (i.e., "I don't know" or "does not apply"-like answers uncheck other answers)
+            temp_input.addEventListener("click", function(event) {
+                let answer_group_name = event.target.name;
+                console.log(answer_group_name);
+                user_response = [];
+                selected_responses = document.querySelectorAll('input[name=' + code + ']:checked');
+                selected_responses.forEach(response => {
+                    user_response.push(response.value);
+                });
+                // OK TO REMOVE COMMENTED CODE BELOW
+                // not sure why it isn't picking up radio button values; code above works fine, maybe "querySelectorAll" is returning only an array?
+                // switch(question_map.get(code).answer_type) {
+                //     case "radio":
+                //         selected_response = document.querySelectorAll('input[name=' + code + ']:checked');
+                //         user_response = selected_response.value;
+                //         break;
+                //     case "checkbox":
+                //         // user_response = null;
+                //         user_response = [];
+                //         selected_responses = document.querySelectorAll('input[name=' + code + ']:checked');
+                //         selected_responses.forEach(response => {
+                //             user_response.push(response.value);
+                //         }
+                //         );
+                //         break;
+                //     default:
+                //         break;
+                // }; 
+                // let answer_index = codes.indexOf(answer_group_name);
+                // let answer_value = answer_values[answer_index][user_response];
+                response_map.set(answer_group_name, user_response);
+                response_recode(code);
+                // console.log(response_map);
+            });
+            answer_block.appendChild(temp_input);
+            temp_label = document.createElement("label");
+            temp_label.for = code + "_" + i.toString();
+            temp_label.innerHTML = answers_display[i];
+            answer_block.appendChild(temp_label);
+            answer_block.appendChild(document.createElement("br"));
+        };
+
+        // display elements
+        document.getElementById(navigator_insertion).append(question_container);
+
+        // update position for next question
+        navigator_insertion = code + "_div";
+    };
+
+    // school_selector: create input box for school name
+    function school_selector() {
+        let school_input = Object.assign(document.createElement("input"), {
+            type: "text",
+            id: "SCH_t",
+            name: "SCH",
+            placeholder: "Click here and type the school name",
+            autocomplete: "off"
+        });
+
+        
+
+    };
+
+    // streamlined cert conditions: X SCP = 1 & ACE = 1 | X SCS = 1 & ACE = 1 | X SCH = 1 & FRP = 1 | X SCP = 1 & SCH = 1 | X SCS = 1 & SCH = 1 | X SCS = 1 & SCH = 2 | X SCM = 1 & INC = 1 & ACE = 1 | X SCM = 1 & INC = 1 & SCH = 1
+    // application conditions: X SCH = 1 & INC = 1 | X SCM = 1 & INC = 0 | SCM = 1 & INC = 1 & ACE = -1 & SCH = 0
+    
+    // response_recode: recode responses from arrays to single values
+    function response_recode(code) {
+        let user_response = response_map.get(code);
+        switch (code) {
+            case "SCP":
+                switch (true) {
+                    case user_response.includes("1"):
+                        response_map.set(code, 1);
+                        break;
+                    case (user_response.includes("2") && user_response.length === 1):
+                        response_map.set(code, 2);
+                        break;
+                    default:
+                        response_map.set(code, 0);
+                        break;
+                };
+                break;
+            case "SCS":
+                if (user_response.includes("1")) {
+                    response_map.set(code, 1);
+                } else {
+                    response_map.set(code, 0);
+                };
+                break;
+            default:
+                response_map.set(code, user_response[0]);
+                break;
+        };
+        console.log(response_map);
+    };
+
+    function determine_eligibility() {
+        console.log(response_map);
+        switch (true) {
+            case (response_map.get("SCP") === 1 && (response_map.get("ACE") === 1 || response_map.get("SCH") === 1 || response_map.get("SCH") === 2)):
+            case (response_map.get("SCP") === 2 && response_map.get("INC") === 1 && (response_map.get("ACE") === 1 || response_map.get("SCH") === 1)):
+                document.getElementById("eligibility_determination").innerHTML = outcome_map.get("mSCP");
+                break;
+            case (response_map.get("SCS") === 1 && (response_map.get("ACE") === 1 || response_map.get("SCH") === 1 || response_map.get("SCH") === 2)):
+                document.getElementById("eligibility_determination").innerHTML = outcome_messages[outcome_codes.indexOf("mSCS")];
+                break;
+            case (response_map.get("SCH") === 1 || response_map.get("FRP") === 1):
+                document.getElementById("eligibility_determination").innerHTML = outcome_messages[outcome_codes.indexOf("mFRP")];
+                break;
+            case (response_map.get("SCH") === 1 || response_map.get("INC") === 1):
+                document.getElementById("eligibility_determination").innerHTML = outcome_messages[outcome_codes.indexOf("mELI")];
+                break;
+            case (response_map.get("SCP") === 2 && response_map.get("INC") === 0):
+                document.getElementById("eligibility_determination").innerHTML = outcome_messages[outcome_codes.indexOf("mUNK")];
+                break;
+            default:
+                break;
+        };
+    };
+
+    console.log(response_map);
+
+    // FIGURE OUT WHY QUESTIONS AREN'T FIRING IN PROPER ORDER!
+    function question_order() {
+        let next_question_code;
+        let response_count = response_map.size;
+        console.log(response_map.size);
+        let SCP = response_map.get("SCP");
+        let SCS = response_map.get("SCS");
+        let ACE = response_map.get("ACE");
+        let SCH = response_map.get("SCH");
+        let FRP = response_map.get("FRP");
+        let INS = response_map.get("INS");
+        let INC = response_map.get("INC");
+        switch(true) {
+            // when to ask SCP -- first question
+            case response_count == 0:
+                next_question_code = "SCP";
+                break;
+            // when to ask SCS
+            case (response_count == 1 && SCP == 0):
+            case (response_count == 2 && SCP == 2 && ACE == 1):
+                next_question_code = "SCS"
+                break;
+            // when to ask ACE
+            case (response_count == 2 && SCP == 0 && SCS == 1): 
+            case (response_count == 1 && SCP == 1):
+            case (response_count == 1 && SCP == 2):
+                next_question_code = "ACE";
+                break;
+            // when to ask SCH
+            case (response_count == 2 && SCP == 0 && SCS == 0):
+            case (response_count == 3 && SCP == 0 && SCS == 1 && ACE == 0):
+            case (response_count == 2 && SCP == 1 && ACE == 0):
+            case (response_count == 2 && SCP == 2 && ACE == 0):
+            case (response_count == 4 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0):
+                next_question_code = "SCH";
+                break;
+            // when to ask FRP
+            case (response_count == 3 && SCP == 0 && SCS == 0 && SCH == 1):
+            case (response_count == 4 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1):
+            case (response_count == 3 && SCP == 1 && ACE == 0 && SCH == 1):
+            case (response_count == 3 && SCP == 2 && ACE == 0 && SCH == 1):
+            case (response_count == 5 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1):
+                next_question_code = "FRP";
+                break;
+            // when to ask INS
+            case (response_count == 4 && SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+            case (response_count == 5 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+            case (response_count == 4 && SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+            case (response_count == 4 && SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+            case (response_count == 6 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+                next_question_code = "INS";
+                break;
+            // when to ask INC
+            case (response_count == 5 && SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+            case (response_count == 6 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+            case (response_count == 5 && SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+            case (response_count == 5 && SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+            case (response_count == 7 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+                next_question_code = "INC";
+                break;
+        }
+        next_question(next_question_code);
+    };
+
+    // function to check responses against current set of questions asked and determine next question or eligibility
+    // SCP --> SCS if SCP = 0 --> ACE if SCM, SCP = 1, or SCS = 1 --> INC if SCM and ACE = 1 and SCS = 0 or -1 --> SCS if SCM and INC = -1 --> SCH --> FRP --> INC
+    function next_question(code) {
+        determine_eligibility();
+        display_question(code);
+    };
+
+    // create codes variable - holds question codes to facilitate mapping user input
+    const codes = ["SCP", "SCS", "ACE", "SCH", "FRP", "INS", "INC"];
+
+    // create question_text variable - array of eligibility navigator questions; must replace income eligibility threshold language with dynamic lookup for guidelines based on household size input
+    const question_text = ["Is your child enrolled in any of the following programs?", "Has your child been identified as any of the following?", "Since July 1, 2024, was your child between the ages of 6 and 18?", "Which school does your child attend?", "Have you received a letter from your child's school/district stating that your child was approved for free or reduced-price school meals for the 2024-2025 school year?", "How many people are in your household?", "Is your household income below { income eligibility threshold lookup for household size }?"];
+
+    // create answers variable - array of answer options for each variable; must replace school lookup list with list of schools/districts
+    const answers = [["SNAP", "Medicaid", "ADC", "FDPIR", "Head Start", "My child is not enrolled in any of these programs", "I don't know"], ["Homeless", "Foster", "Migrant", "Runaway", "My child has not been identified as any of these", "I don't know"], ["Yes", "No"], ["(lookup list - NSLP)", "(lookup list - CEP)", "My child does not attend any of these schools", "My child is home schooled"], ["Yes", "No", "I don't know"], ["{ user input }"], ["Yes", "No", "I don't know"]];
+
+    // create outcome_codes variable - holds outcome codes to facilitate displaying outcomes
+    const outcome_codes = ["mSCP", "mSCS", "mFRP", "mELI", "mUNK", "mNOT"];
+
+    // create outcome_messages variable - 
+    const outcome_messages = ["Your child should automatically receive Summer EBT benefits because of their enrollment in the following program(s): { programs selected from question }. *You should not have to apply* for benefits for your child.", "Your child should automatically receive Summer EBT benefits because of their identification as the following: { statuses selected from question }. *You should not have to apply* for benefits for your child.", "Your child should automatically receive Summer EBT benefits because of their eligibility for free or reduced-price school meals. *You should not have to apply* for benefits for your child.", "You should apply for Summer EBT benefits for your child. Based on your household income, your child should be eligible for Summer EBT benefits.", "You may need to apply for Summer EBT benefits for your child. To be eligible, a child must meet one of the following requirements: <br/> 1) Be certified to receive free/reduced-price school meals *and* attend a school participating in the National School Lunch Program or School Breakfast Program, or <br/> 2) Be participating in Supplemental Nutrition Assistance Program (SNAP), Medicaid, Temporary Assistance for Needy Families (TANF) or identified as Homeless, Foster, Migrant *and* be between the ages of 5 and 18, or <br/> 3) Attend a school participating in the National School Lunch Program or School Breakfast Program *and* have a household income that meets the requirements for Summer EBT.", "You child might not be eligible for Summer EBT but you should apply if you think your child is eligible. To be eligible, a child must meet one of the following requirements: <br/> 1) Be certified to receive free/reduced-price school meals *and* attend a school participating in the National School Lunch Program or School Breakfast Program, or <br/> 2) Be participating in Supplemental Nutrition Assistance Program (SNAP), Medicaid, Temporary Assistance for Needy Families (TANF) or identified as Homeless, Foster, Migrant *and* be between the ages of 5 and 18, or <br/> 3) Attend a school participating in the National School Lunch Program or School Breakfast Program *and* have a household income that meets the requirements for Summer EBT."];
+
+    // create answer_values objects - array of arrays of values mapped to each answer option for each question; used to facilitate mapping user input
+    const answer_values = [[1, 2, 1, 1, 1, 0, 0], [1, 1, 1, 1, 0, 0], [1, 0], [1, 2, 0, 0], [1, 0, 0], [], [1, 0, 0]];
+
+    // create answer_types object - define input type for answers
+    const answer_types = ["checkbox", "checkbox", "radio", "radio", "radio", "text", "radio"];
+
+    // populate question_map to facilitate question display
+    for (i = 0; i < codes.length; i++) {
+        temp_question = new Question(codes[i], question_text[i], answers[i], answer_values[i], answer_types[i]);
+        question_map.set(codes[i], temp_question);
+    };
+
+    // populate outcome_map to facilitate outcome display
+    for (i = 0; i < outcome_codes.length; i++) {
+        temp_outcome = new Outcome(outcome_codes[i], outcome_messages[i]);
+        outcome_map.set(outcome_codes[i], temp_outcome);
+    };
+
+    // // SCHOOL DROPDOWN STUFF
+
+    // // create schools object: schools by district, NSLP status, CEP status, value
+    // let schools = [{"district": "d0", "school": "s0", "nslp": 0, "cep": 0, "value": 0},
+    // {"district": "d1", "school": "s1", "nslp": 1, "cep": 0, "value": 1},
+    // {"district": "d2", "school": "s2", "nslp": 1, "cep": 1, "value": 2}];
+
+    // let schools_list = [];
+    // schools.forEach((school) => {
+    //     schools_list.push(school["school"]);
+    // });
+
+    // // need to create HTML elements!!
+
+    // let schools_input = Object.assign(document.createElement("input"), {
+    //     type: "text",
+    //     id: "SCH_t",
+    //     name: "SCH",
+    //     size: "50",
+    //     placeholder: "Click here and type the school name",
+    //     autocomplete: "off"
+    // });
+    // document.getElementById("input").appendChild(schools_input);
+
+    // const dropdown_container = document.getElementById("dropdown");
+    // dropdown_container.style.display = "none";
+
+    // const help_container = document.getElementById("help");
+    // help_container.style.display = "none";
+
+    // schools_input.addEventListener("input", function () {
+    //     let query = schools_input.value.toLowerCase();
+    //     dropdown_container.innerHTML = null;
+
+    //     if (query) {
+    //         let matches = schools_list.filter(value => 
+    //             value.toLowerCase().includes(query)
+    //         );
+
+    //         if (matches.length > 0) {
+    //             dropdown_container.style.display = "block";
+    //             matches.forEach(match => {
+    //                 const item = document.createElement("div");
+    //                 item.textContent = match;
+    //                 item.addEventListener("click", function () {
+    //                     schools_input.value = match; // Set input value
+    //                     dropdown_container.style.display = "none"; // Hide dropdown
+    //                     help_container.style.display = "none";
+    //                 });
+    //                 dropdown_container.appendChild(item);
+    //             });
+    //         } else {
+    //             dropdown_container.style.display = "none";
+    //         }
+    //     } else {
+    //         dropdown_container.style.display = "none";
+    //     }
+    // });
+
+    // // Hide dropdown when clicking outside
+    // document.addEventListener("click", function (event) {
+    //     if (!event.target.closest(".school_input_container")) {
+    //         dropdown_container.style.display = "none";
+    //     }
+    // });
+
+    // // help message if school_input text does not match a school
+    // schools_input.addEventListener("blur", function () {
+    //     switch (true) {
+    //         case schools_input.value == "":
+    //             help_container.innerHTML = null;
+    //             help_container.style.display = "none";
+    //             break;
+    //         case (!schools_list.includes(schools_input.value)):
+    //             help_container.innerHTML = "Please select a school from the list.";
+    //             help_container.style.display = "block";
+    //             break;
+    //         default:
+    //             help_container.innerHTML = null;
+    //             help_container.style.display = "none";
+    //             break;
+    //         }
+    //     });
+
+    // // get school value
+    // schools_input.addEventListener("change", function() {
+    //     switch(true) {
+    //         case !schools_list.includes(schools_input.value):
+    //             break;
+    //         case schools_list.includes(schools_input.value):
+    //             selected_school = schools_input.value;    
+    //             let school_index = schools_list.indexOf(selected_school);
+    //             let school_program_value = schools[school_index]["value"];
+    //             // map to user responses
+    //             // console.log(selected_school + ": " + school_program_value.toString()); 
+    //             break;
+    //     };
+    // });
+
+display_question("SCP");
+
+</script>
