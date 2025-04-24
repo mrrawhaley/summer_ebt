@@ -1,0 +1,1317 @@
+<html>
+
+    <head>
+
+		<meta name="viewport" content="width=device-width,  initial-scale=1.0" />
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+
+        <style>
+            
+			* {
+				box-sizing: border-box;
+                font-family: "Open Sans", Arial, Helvetica, sans-serif;
+			}
+
+            /* Container for the combo box */
+            .school_input_container {
+                position: relative;
+                /* width: 250px; */
+            }
+    
+            /*
+            Input field 
+            #combo-box {
+                width: 100%;
+                padding: 8px;
+                box-sizing: border-box;
+            }
+            */
+    
+            /* Dropdown list */
+            #school_input_dropdown_div {
+                position: absolute;
+                width: 75%;
+                border: 1px solid #ccc;
+                /* border-top: none; */
+                background: white;
+                max-height: 120px; /* Makes the list scrollable */
+                overflow-y: auto;
+                display: none;
+                z-index: 1000;
+            }
+    
+            /* Dropdown items */
+            #school_input_dropdown_div div {
+                padding: 8px;
+                cursor: pointer;
+            }
+    
+            #school_input_dropdown_div div:hover {
+                background-color: #f0f0f0;
+            }
+
+            #school_input_warning_div, #school_input_dropdown_div {
+                display: none;
+            }
+
+			.response_collector {
+				height: 100dvh;
+				padding: 0.1em 0.1em 0.1em 0.1em;
+			}
+
+			.eligibility {
+				height: 100dvh;
+				font-weight: bold;
+				padding: 0.1em 0.1em 0.1em 0.1em;
+			}
+
+			.navigation {
+				position: fixed;
+				bottom: 5dvh;
+				right: 5dvw;
+			}
+
+			#back_button, #next_button {
+				position: fixed;
+				bottom: 5dvh;
+				width: 25dvw;
+                font-weight: bold;
+                color: white;
+			}
+
+			#back_button {
+				left: 5dvh;
+                background-color:dodgerblue;
+			}
+
+			#next_button {
+				right: 5dvh;
+                background-color: darkorange;
+			}
+
+			.question_text {
+				font-weight: bold;
+				font-size: 1.1em;
+			}
+        </style>
+
+    </head>
+
+    <body>
+        <div class="container">
+            <div id="introduction">
+                <!-- introductory text -->
+            </div>
+            <div id="question_navigator"></div>
+            <div id="eligibility_determination" class="eligibility"></div>
+            <div id="navigation_buttons" class="navigation">
+                <input type="button" id="back_button" value="go back" onclick="previous_question()" class="navigation_button" />
+                <input type="button" id="next_button" value="next question" class="navigation_button"/> <!-- onclick="question_order()" -->
+            </div>
+        </div>
+    </body>
+
+</html>
+
+<script type = "text/javascript">
+
+    // create question_map variable - map of question codes and Question class objects
+    let question_map = new Map();
+
+    // create response_map variable - map of user responses to each question
+    let response_map = new Map();
+
+    // create outcome_map variable - map of outcomes for user responses
+    let outcome_map = new Map();
+
+    // create navigator_insertion variable - holds HTML element id of most recently inserted question to determine where to insert next question or message; initialized to start of navigator
+    var navigator_insertion = "question_navigator";
+
+    // create eligibility_determined variable - state of eligibilty determination
+    let eligibility_determined = false;
+
+    // create SEBT_year variable - use current date to determine which set of income eligibility guidelines to use; if current month is July through December, use guidelines for following year --> else, use guidelines for current year
+    // NOTE: getMonth() is zero-indexed
+    let SEBT_year;
+    let today = new Date();
+    let this_month = today.getMonth();
+    let this_year = today.getFullYear();
+    if (this_month >= 6) {
+        SEBT_year = this_year.toString() + "-" + (this_year + 1).toString();
+    } else {
+        SEBT_year = (this_year - 1).toString() + "-" + this_year.toString();
+    };
+
+    // create Question class
+    class Question {
+        constructor(code, question, answers, answer_values, answer_type) {
+            this.code = code;
+            this.question = question;
+            this.answers = answers;
+            this.answer_values = answer_values;
+            this.answer_type = answer_type;
+
+            // this.create_question_HTML_elements(code);
+        };
+
+        // create_question_HTML_elements(code) {
+        //     let question_container = Object.assign("div", {
+        //         id: code + "_div",
+        //         class: "question"
+        //     });
+        //     // create divs for explanatory text, response options, help icon, and warning text; append as children to question_container
+        // };
+    };
+
+    // create Outcome class
+    class Outcome {
+        constructor(code, outcome_text) {
+            this.code = code;
+            this.outcome_text = outcome_text;
+        };
+    };
+
+    // create next_question_code - get what next question code should be; used to 
+    let next_question_code = "";
+
+    // display_question: displays question and answer options
+    function display_question(code) {
+        // change next button behaviors
+        document.getElementById("next_button").addEventListener("click", determine_eligibility);
+        
+        // create HTML elements
+        let question_container = document.createElement("div");
+        question_container.id = code + "_div";
+		question_container.className = "response_collector";
+
+        let question_paragraph = document.createElement("p");
+        question_paragraph.id = code + "_p";
+		question_paragraph.className = "question_text";
+        
+        let question_display = question_map.get(code).question;
+
+        question_paragraph.innerHTML = question_display;
+
+        let answer_block = document.createElement("p");
+
+        let user_response;
+
+        // organize elements
+        question_container.appendChild(question_paragraph);
+        question_container.appendChild(answer_block);
+
+        let answers_display = question_map.get(code).answers;
+        let input_values = question_map.get(code).answer_values;
+
+        switch(code) {
+            case "INS":
+                let INS_input = Object.assign(document.createElement("input"), {
+                    type: "text",
+                    id: "INS_t",
+                    name: "INS",
+                    size: "2",
+                    placeholder: "#",
+                    autocomplete: "off"
+                });
+                INS_input.addEventListener("change", function(event) {
+                    response_map.set("INS", INS_input.value)
+                    const string_to_replace = "{ income eligibility threshold lookup for household size }";
+                let user_income_guidelines = [];
+                income_guidelines.forEach((guideline) => {
+                    if (guideline["year"] == SEBT_year && guideline["household_size"] == response_map.get("INS")) {
+                        user_income_guidelines.push(guideline);
+                    };
+                });
+                // create user_income_guidelines_string object - string containing the pattern "$[amount] per [frequency]" for the six income frequencies
+                let user_income_guidelines_string;
+                function create_user_income_guidelines_string() {
+                    let user_income_guidelines_string_array = [];
+                    const usd = new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD'
+                    });
+                    user_income_guidelines.forEach((guideline) => {
+                        let dollar_amount = usd.format(guideline["amount"]);
+                        let frequency = guideline["income_frequency"];
+                        user_income_guidelines_string_array.push(" " + dollar_amount + " " + frequency);
+                    });
+                    user_income_guidelines_string = user_income_guidelines_string_array.toString();
+                };
+                create_user_income_guidelines_string();
+                let new_INC_question = question_map.get("INC").question.replace(string_to_replace, user_income_guidelines_string);
+                question_map.get("INC").question = new_INC_question;
+                });
+                question_container.append(INS_input);
+                // create string_to_replace object - string from Google Sheets navigator builder to replace with income guidelines by household size from question INS
+                // START HERE
+                // const string_to_replace = "{ income eligibility threshold lookup for household size }";
+                // let user_income_guidelines = [];
+                // income_guidelines.forEach((guideline) => {
+                //     if (guideline["year"] == SEBT_year && guideline["household_size"] == response_map.get("INS")) {
+                //         user_income_guidelines.push(guideline);
+                //     };
+                // });
+                // // create user_income_guidelines_string object - string containing the pattern "$[amount] per [frequency]" for the six income frequencies
+                // let user_income_guidelines_string;
+                // function create_user_income_guidelines_string() {
+                //     let user_income_guidelines_string_array = [];
+                //     const usd = new Intl.NumberFormat('en-US', {
+                //     style: 'currency',
+                //     currency: 'USD'
+                //     });
+                //     user_income_guidelines.forEach((guideline) => {
+                //         let dollar_amount = usd.format(guideline["amount"]);
+                //         let frequency = guideline["income_frequency"];
+                //         user_income_guidelines_string_array.push(" " + dollar_amount + " " + frequency);
+                //     });
+                //     user_income_guidelines_string = user_income_guidelines_string_array.toString();
+                // };
+                // create_user_income_guidelines_string();
+                // let new_INC_question = question_map.get("INC").question.replace(string_to_replace, user_income_guidelines_string);
+                // question_map.get("INC").question = new_INC_question;
+                break;
+            // case "INC":
+            //     break;
+            case "SCH":
+                // create divs for school dropdown
+                let school_input_container = Object.assign(document.createElement("div"), {
+                    id: "school_input_div"
+                });
+
+                let school_input_warning = Object.assign(document.createElement("div"), {
+                    id: "school_input_warning_div"
+                });
+
+                let school_input_dropdown = Object.assign(document.createElement("div"), {
+                    id: "school_input_dropdown_div"
+                });
+            
+                // create school_input object - text input to collect school name
+                // let school_input_paragraph = Object.assign(document.createElement("p"), {
+                //     id: ""
+                // });
+                let school_input = Object.assign(document.createElement("input"), {
+                    type: "text",
+                    id: "SCH_t",
+                    class: "school_input_container",
+                    name: "SCH",
+                    placeholder: "Click here and type the school name",
+                    autocomplete: "off"
+                });
+
+                // create schools_list object - get names of schools to use later as index for matching
+                let schools_list = [];
+                schools.forEach((school) => {
+                    schools_list.push(school["school"]);
+                });
+                // // keep unique values only
+                // schools_list = Array.from(new Set(schools_list));
+
+                // display school input
+                let school_input_fragment = document.createDocumentFragment();
+                school_input_fragment.append(school_input, school_input_warning, school_input_dropdown);
+                // school_input_container.appendChild(school_input_fragment);
+                question_container.append(school_input_fragment, document.createElement("br"));
+
+                // add event listener to show dropdown for school selection
+                school_input.addEventListener("input", function () {
+                    let query = school_input.value.toLowerCase();
+                    school_input_dropdown.innerHTML = null;
+
+                    if (query) {
+                        let matches = schools_list.filter(value => 
+                            value.toLowerCase().includes(query)
+                        );
+
+                        if (matches.length > 0) {
+                            school_input_dropdown.style.display = "block";
+                            matches.forEach(match => {
+                                const item = document.createElement("div");
+                                item.textContent = match;
+                                item.addEventListener("click", function () {
+                                    school_input.value = match; // Set input value
+                                    school_input_dropdown.style.display = "none"; // Hide dropdown
+                                    school_input_warning.style.display = "none";
+                                    // get school value from schools and set value of SCH response
+                                    let school_index = schools_list.indexOf(item.textContent);
+                                    let school_program_value = schools[school_index].value;
+                                    response_map.set(code, school_program_value);
+                                });
+                                school_input_dropdown.appendChild(item);
+                            });
+                        } else {
+                            school_input_dropdown.style.display = "none";
+                        }
+                    } else {
+                        school_input_dropdown.style.display = "none";
+                    }
+                });
+
+                // Hide dropdown when clicking outside
+                document.addEventListener("click", function (event) {
+                    // if (!event.target.closest(".school_input_container")) {
+                    if (!event.target.closest("#school_input_dropdown_div")) {
+                        school_input_dropdown.style.display = "none";
+                    }
+                });
+
+                // help message if school_input text does not match a school
+                school_input.addEventListener("blur", function () {
+                    switch (true) {
+                        case (!schools_list.includes(school_input.value)):
+                            school_input_warning.innerHTML = "Please select a school from the list.";
+                            school_input_warning.style.display = "block";
+                            break;
+                        case school_input.value == "":
+                        default:
+                            school_input_warning.innerHTML = null;
+                            school_input_warning.style.display = "none";
+                            break;
+                        }
+                    }
+                );
+                // add non-school response options; "slice(2)" removes NSLP and CEP options/values
+                let modified_SCH_answers = Array.from(question_map.get("SCH").answers).slice(2);
+                let modified_SCH_answer_values = Array.from(question_map.get("SCH").answer_values).slice(2);
+                let modified_SCH_answer_map = new Map();
+                for (let i = 0; i < modified_SCH_answers.length; i++) {
+                    let temp_input = Object.assign(document.createElement("input"), {
+                        type: "radio",
+                        id: code + "_" + i.toString(),
+                        name: code,
+                        value: modified_SCH_answer_values[i]
+                    });
+                    temp_input.addEventListener("click", function(event) {
+                        let answer_group_name = event.target.name;
+                        user_response = [];
+                        selected_responses = document.querySelectorAll('input[name=' + code + ']:checked');
+                        selected_responses.forEach(response => {
+                            user_response.push(response.value);
+                        });
+                        response_map.set(answer_group_name, user_response);
+                    });
+                    question_container.append(temp_input);
+                    temp_label = Object.assign(document.createElement("label"), {
+                        for: code + "_" + i.toString(),
+                        innerHTML: modified_SCH_answers[i],
+                    });
+                    question_container.append(temp_label, document.createElement("br"));
+                };
+                break;
+            default:
+                for (let i = 0; i < answers_display.length; i++) {
+                    let temp_input = document.createElement("input");
+                    temp_input.type = question_map.get(code).answer_type;
+                    temp_input.id = code + "_" + i.toString();
+                    temp_input.name = code;
+                    temp_input.value = input_values[i];
+                    // console.log(temp_input.value);
+                    // add event listener - if value = 0 then inputs in input group with value > 0 are unchecked (i.e., "I don't know" or "does not apply"-like answers uncheck other answers)
+                    temp_input.addEventListener("click", function(event) {
+                        let answer_group_name = event.target.name;
+                        // console.log(answer_group_name);
+                        user_response = [];
+                        selected_responses = document.querySelectorAll('input[name=' + code + ']:checked');
+                        // console.log(Array.from(selected_responses));
+                        switch(code) {
+                            case "SCP":
+                            case "SCS":
+                                // send selected item objects to temp list --> for each item object, send index to array --> use array to get program names and populate in mSCP
+                                let m_list_temp = [];
+                                let m_list = [];
+                                let m_string = "";
+                                let current_outcome_text = outcome_messages[outcome_codes.indexOf("m" + code)];
+                                m_list_temp = Array.from(selected_responses);
+                                m_list_temp.forEach((program) => {
+                                    // m_list.push(Number(program.id.slice(program.id.indexOf("_") + 1)));
+                                    let program_index = Number(program.id.slice(program.id.indexOf("_") + 1));
+                                    m_list.push(question_map.get(code).answers[program_index]);
+                                });
+                                m_string = m_list.join(", ");
+                                let m_programs_text_to_replace = "";
+                                if (code == "SCP") {
+                                    m_programs_text_to_replace = "{ programs selected from question }";
+                                } else if (code == "SCS") {
+                                    m_programs_text_to_replace = "{ statuses selected from question }";
+                                };
+                                outcome_map.get("m" + code).outcome_text = current_outcome_text.replace(m_programs_text_to_replace, m_string);
+                                console.log(outcome_map.get("m" + code));
+                                selected_responses.forEach(response => {
+                                    user_response.push(response.value);
+                                });
+                                break;
+                            default:
+                                selected_responses.forEach(response => {
+                                    user_response.push(response.value);
+                                });
+                                break;
+                        };
+                        // });
+
+                        // OK TO REMOVE COMMENTED CODE BELOW
+                        // not sure why it isn't picking up radio button values; code above works fine, maybe "querySelectorAll" is returning only an array?
+                        // switch(question_map.get(code).answer_type) {
+                        //     case "radio":
+                        //         selected_response = document.querySelectorAll('input[name=' + code + ']:checked');
+                        //         user_response = selected_response.value;
+                        //         break;
+                        //     case "checkbox":
+                        //         // user_response = null;
+                        //         user_response = [];
+                        //         selected_responses = document.querySelectorAll('input[name=' + code + ']:checked');
+                        //         selected_responses.forEach(response => {
+                        //             user_response.push(response.value);
+                        //         }
+                        //         );
+                        //         break;
+                        //     default:
+                        //         break;
+                        // }; 
+                        // let answer_index = codes.indexOf(answer_group_name);
+                        // let answer_value = answer_values[answer_index][user_response];
+                        
+                        response_map.set(answer_group_name, user_response);
+                        response_recode(code);
+                        // console.log(response_map);
+                    });
+                    question_container.append(temp_input);
+                    let temp_label = Object.assign(document.createElement("label"), {
+                        for: code + "_" + i.toString(),
+                        innerHTML: question_map.get(code).answers[i]
+                    });
+                    question_container.append(temp_label, document.createElement("br"));
+                };
+            };
+
+            // display elements
+            document.getElementById("question_navigator").append(question_container);
+			document.getElementById("question_navigator").scrollIntoView({behavior: "smooth", block: "end"});
+
+            // update position for next question
+            navigator_insertion = code + "_div";
+    };
+
+    // delete current question to re-answer previous question
+    function previous_question() {
+        let last_question = document.getElementById("question_navigator").lastElementChild;
+		let last_question_code = last_question.id.slice(0 ,3);
+        console.log(last_question.id);
+		let next_button_element = document.getElementById("next_button");
+        if (eligibility_determined == true) {
+			response_map.delete(last_question_code);
+			console.log(Array.from(response_map));
+			document.getElementById("question_navigator").lastElementChild.scrollIntoView({behavior: "smooth", block: "start"});
+			document.getElementById("eligibility_determination").innerHTML = "";
+			next_button_element.removeEventListener("click", reset_navigator);
+			document.getElementById("next_button").value = "next question";
+			document.getElementById("next_button").addEventListener("click", determine_eligibility);
+			eligibility_determined = false;
+		} else {
+			response_map.delete(last_question_code);
+			last_question.remove();
+			document.getElementById("question_navigator").lastElementChild.scrollIntoView({behavior: "smooth", block: "start"});
+		};
+		
+        // let current_question_code = navigator_insertion.slice(0, 3);
+        // let answered_questions = Array.from(response_map.keys());
+        // let previous_question_code = answered_questions[answered_questions.length - 1];
+        // response_map.delete(previous_question_code);
+        // document.getElementById(previous_question_code + "_div").remove();
+        // console.log(answered_questions);
+    };
+
+    // school_selector: create input box for school name
+    // function school_selector() {    
+    // };
+
+    // streamlined cert conditions: X SCP = 1 & ACE = 1 | X SCS = 1 & ACE = 1 | X SCH = 1 & FRP = 1 | X SCP = 1 & SCH = 1 | X SCS = 1 & SCH = 1 | X SCS = 1 & SCH = 2 | X SCM = 1 & INC = 1 & ACE = 1 | X SCM = 1 & INC = 1 & SCH = 1
+    // application conditions: X SCH = 1 & INC = 1 | X SCM = 1 & INC = 0 | SCM = 1 & INC = 1 & ACE = -1 & SCH = 0
+    
+    // response_recode: recode responses from arrays to single values
+    function response_recode(code) {
+        let user_response = response_map.get(code);
+        switch (code) {
+            case "SCP":
+                switch (true) {
+                    case user_response.includes("1"):
+                        response_map.set(code, 1);
+                        break;
+                    case (user_response.includes("2") && user_response.length === 1):
+                        response_map.set(code, 2);
+                        break;
+                    default:
+                        response_map.set(code, 0);
+                        break;
+                };
+                break;
+            case "SCS":
+                if (user_response.includes("1")) {
+                    response_map.set(code, 1);
+                } else {
+                    response_map.set(code, 0);
+                };
+                break;
+            default:
+                response_map.set(code, Number(user_response[0]));
+                break;
+        };
+        console.log(response_map);
+    };
+
+    function determine_eligibility() {
+        let determination = "";
+        let SCP = response_map.get("SCP");
+        let SCS = response_map.get("SCS");
+        let ACE = response_map.get("ACE");
+        let SCH = response_map.get("SCH");
+        let FRP = response_map.get("FRP");
+        let INS = response_map.get("INS");
+        let INC = response_map.get("INC");
+        switch (true) {
+            case (SCP == 1 && (ACE == 1 || SCH == 1 || SCH == 2)):
+            case (SCP == 2 && ACE == 1 && SCS == 0 && INC == 1):
+                determination = "mSCP";
+                break;
+            case (SCP == 0 && SCS == 1 && ACE == 1):
+            case (SCP == 2 && ACE == 1 && SCS == 1):
+                determination = "mSCS";
+                break;
+            case (SCH == 1 && FRP == 1):
+                determination = "mFRP";
+                break;
+            case (((FRP == 0 && FRP == 2) || SCH == 2) && INC == 1):
+                determination = "mELI";
+                break;
+            case (((FRP == 0 && FRP == 2) || SCH == 2) && INC == 2):
+                determination = "mUNK";
+                break;
+            case (SCP == 0 && SCS == 0 && SCH == 0):
+            case (SCP == 1 && ACE == 0 && SCH == 0):
+            case (SCP == 2 && ACE == 0 && SCH == 0):
+            case (SCP == 0 && SCS == 0 && SCH == 2 && INC == 0):
+            case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 0):
+            case (SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
+            case (SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
+            case (SCP == 0 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
+            case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
+            case (SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 0):
+            case (SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1 && FRP == 0):
+            case (SCP == 2 && ACE == 0 && SCH == 2 && INC == 0):
+                determination = "mNOT";
+            default:
+                break;
+        };
+        let next_button_element = document.getElementById("next_button");
+        if (outcome_codes.includes(determination)) {
+            eligibility_determination_element = document.getElementById("eligibility_determination");
+			eligibility_determination_element.className = "eligibility";
+			eligibility_determination_element.innerHTML = outcome_map.get(determination).outcome_text;
+			eligibility_determination_element.scrollIntoView({behavior: "smooth", block: "end"});
+            eligibility_determined = true;
+            next_button_element.value = "start over";
+            next_button_element.removeEventListener("click", determine_eligibility);
+            next_button_element.addEventListener("click", reset_navigator);
+            // set_next_button();
+        } else {
+            question_order();
+        };
+    };
+
+    // function set_next_button() {
+    //     console.log("setting button...")
+    //     let next_button_element = document.getElementById("next_button");
+    //     // next_button_element.removeEventListener("click", determine_eligibility);
+    //     // next_button_element.removeEventListener("click", reset_navigator);
+    //     if (eligibility_determined == true) {
+    //         next_button_element.value = "start over";
+    //         next_button_element.removeEventListener("click", determine_eligibility);
+    //         next_button_element.addEventListener("click", reset_navigator);
+    //     } else {
+    //         next_button_element.value = "next question";
+    //         next_button_element.removeEventListener("click", reset_navigator);
+    //         next_button_element.addEventListener("click", determine_eligibility);
+    //     };
+    // };
+
+    function reset_navigator() {
+        response_map.clear();
+        console.log(response_map.keys);
+        eligibility_determined = false;
+        navigator_insertion = "question_navigator";
+        
+        let question_container_names = [];
+        let eligibility_determination_div = document.getElementById("eligibility_determination");
+        eligibility_determination_div.innerHTML = "";
+        codes.forEach((code) => {
+            question_container_names.push(code + "_div");
+        });
+        // console.log(question_container_names.toString());
+        
+        let question_containers = Array.from(document.getElementsByTagName("div"));
+        question_containers.forEach((container) => {
+            if (question_container_names.includes(container.id)) {
+                container.remove();
+                console.log(container.id);
+            };
+        });
+
+        let next_button_element = document.getElementById("next_button");
+        next_button_element.value = "next question";
+        next_button_element.removeEventListener("click", reset_navigator);
+
+        display_question("SCP");
+        // set_next_button();
+
+    };
+
+    function question_order() {
+        // determine_eligibility();
+        // if (eligibility_determined == false) {
+        var next_question_code = "";
+        let response_count = response_map.size;
+        console.log(response_map.size);
+        let SCP = response_map.get("SCP");
+        let SCS = response_map.get("SCS");
+        let ACE = response_map.get("ACE");
+        let SCH = response_map.get("SCH");
+        let FRP = response_map.get("FRP");
+        let INS = response_map.get("INS");
+        let INC = response_map.get("INC");
+        switch(true) {
+            // for response counts using INC, add one for INS also
+            // when to ask SCP -- first question
+            case response_count == 0:
+                next_question_code = "SCP";
+                break;
+            // when to ask SCS
+            case (response_count == 1 && SCP == 0):
+            case (response_count == 2 && SCP == 2 && ACE == 1):
+                next_question_code = "SCS"
+                break;
+            // when to ask ACE
+            case (response_count == 2 && SCP == 0 && SCS == 1): 
+            case (response_count == 1 && SCP == 1):
+            case (response_count == 1 && SCP == 2):
+                next_question_code = "ACE";
+                break;
+            // when to ask SCH
+            case (response_count == 2 && SCP == 0 && SCS == 0):
+            case (response_count == 3 && SCP == 0 && SCS == 1 && ACE == 0):
+            case (response_count == 2 && SCP == 1 && ACE == 0):
+            case (response_count == 2 && SCP == 2 && ACE == 0):
+            case (response_count == 4 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0): 
+                next_question_code = "SCH";
+                break;
+            // when to ask FRP
+            case (response_count == 3 && SCP == 0 && SCS == 0 && SCH == 1):
+            case (response_count == 4 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1):
+            case (response_count == 3 && SCP == 1 && ACE == 0 && SCH == 1):
+            case (response_count == 3 && SCP == 2 && ACE == 0 && SCH == 1):
+            case (response_count == 5 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1):
+                next_question_code = "FRP";
+                break;
+            // when to ask INS
+            case (response_count == 3 && SCP == 2 && SCS == 0):
+            case (response_count == 3 && SCP == 0 && SCS == 0 && SCH == 2):
+            case (response_count == 4 && SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+            case (response_count == 5 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+            case (response_count == 4 && SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+            case (response_count == 4 && SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2)):
+            case (response_count == 6 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+            case (response_count == 3 && SCP == 2 && ACE == 0 && SCH == 2):
+                next_question_code = "INS";
+                break;
+            // when to ask INC
+            case (response_count == 5 && SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+            case (response_count == 6 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+            case (response_count == 5 && SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+            case (response_count == 5 && SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+            case (response_count == 7 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+            case INS != undefined:
+                next_question_code = "INC";
+                break;
+            // }
+            // next_question(next_question_code);
+        };
+        display_question(next_question_code);
+    };
+
+    // function to check responses against current set of questions asked and determine next question or eligibility
+    // SCP --> SCS if SCP = 0 --> ACE if SCM, SCP = 1, or SCS = 1 --> INC if SCM and ACE = 1 and SCS = 0 or -1 --> SCS if SCM and INC = -1 --> SCH --> FRP --> INC
+    function next_question(code) {
+        if (eligibility_determined == false) {
+            display_question(code)
+        };
+    };
+
+    // create codes variable - holds question codes to facilitate mapping user input
+    const codes = ["SCP", "SCS", "ACE", "SCH", "FRP", "INS", "INC"];
+
+    // create question_text variable - array of eligibility navigator questions; must replace income eligibility threshold language with dynamic lookup for guidelines based on household size input
+    const question_text = ["Is your child enrolled in any of the following programs?", "Has your child been identified as any of the following?", "Since July 1, 2024, was your child between the ages of 5 and 18?", "Which school does your child attend?", "Have you received a letter from your child's school/district stating that your child was approved for free or reduced-price school meals for the 2024-2025 school year?", "How many people are in your household?", "Is your household income below { income eligibility threshold lookup for household size }?"]
+
+    // create answers variable - array of answer options for each variable; must replace school lookup list with list of schools/districts
+    const answers = [["Supplemental Nutrition Assistance Program (SNAP)", "Medicaid", "Temporary Assistance for Needy Families (TANF)", "My child is not enrolled in any of these programs", "I don't know"], ["Homeless", "Foster", "Migrant", "My child has not been identified as any of these", "I don't know"], ["Yes", "No"], ["(lookup list - NSLP)", "(lookup list - CEP)", "My child does not attend any of these schools", "My child is home schooled"], ["Yes", "No", "I don't know"], ["{ user input }"], ["Yes", "No", "I don't know"]];
+
+    // create outcome_codes variable - holds outcome codes to facilitate displaying outcomes
+    const outcome_codes = ["mSCP", "mSCS", "mFRP", "mELI", "mUNK", "mNOT"];
+
+    // create outcome_messages variable - 
+    const outcome_messages = ["Your child should automatically receive Summer EBT benefits because of their enrollment in the following program(s): { programs selected from question }. *You should not have to apply* for benefits for your child.", "Your child should automatically receive Summer EBT benefits because of their identification as the following: { statuses selected from question }. *You should not have to apply* for benefits for your child.", "Your child should automatically receive Summer EBT benefits because of their eligibility for free or reduced-price school meals. *You should not have to apply* for benefits for your child.", "You should apply for Summer EBT benefits for your child. Based on your household income, your child should be eligible for Summer EBT benefits.", "You may need to apply for Summer EBT benefits for your child. To be eligible, a child must meet one of the following requirements: <br/> 1) Be certified to receive free/reduced-price school meals *and* attend a school participating in the National School Lunch Program or School Breakfast Program, or <br/> 2) Be participating in Supplemental Nutrition Assistance Program (SNAP), Medicaid, Temporary Assistance for Needy Families (TANF) or identified as Homeless, Foster, Migrant *and* be between the ages of 5 and 18, or <br/> 3) Attend a school participating in the National School Lunch Program or School Breakfast Program *and* have a household income that meets the requirements for Summer EBT.", "You child might not be eligible for Summer EBT but you should apply if you think your child is eligible. To be eligible, a child must meet one of the following requirements: <br/> 1) Be certified to receive free/reduced-price school meals *and* attend a school participating in the National School Lunch Program or School Breakfast Program, or <br/> 2) Be participating in Supplemental Nutrition Assistance Program (SNAP), Medicaid, Temporary Assistance for Needy Families (TANF) or identified as Homeless, Foster, Migrant *and* be between the ages of 5 and 18, or <br/> 3) Attend a school participating in the National School Lunch Program or School Breakfast Program *and* have a household income that meets the requirements for Summer EBT."];
+
+    // create answer_values objects - array of arrays of values mapped to each answer option for each question; used to facilitate mapping user input
+    const answer_values = [[1, 2, 1, 0, 0], [1, 1, 1, 0, 0], [1, 0], [1, 2, 0, 0], [1, 0, 0], [], [1, 0, 2]];
+
+    // create answer_types object - define input type for answers
+    const answer_types = ["checkbox", "checkbox", "radio", "radio", "radio", "text", "radio"];
+
+    // create schools object - list of schools for SCH question
+    const schools = [{"district": "All Saints School - Omaha", "school": "All Saints School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Ansley Public School", "school": "Ansley Public School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Arnold Public School", "school": "Arnold Public School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Bancroft-Rosalie School", "school": "Bancroft-Rosalie School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Bancroft-Rosalie School", "school": "Bancroft-Rosalie Community School Preschool", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Banner County School", "school": "Banner County School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Bayard Public Schools", "school": "Bayard Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Bayard Public Schools", "school": "Bayard Secondary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Bridgeport Public School", "school": "Bridgeport Public School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Cody-Kilgore Schools", "school": "Cody Kilgore Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Cody-Kilgore Schools", "school": "Cody Kilgore Secondary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Dundy County Public School", "school": "Benkelman Elementary School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Dundy County Public School", "school": "Benkelman High School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Elba Public School", "school": "Elba Public School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Franklin Public School", "school": "Franklin Public School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Gordon-Rushville Public Schools", "school": "Gordon-Rushville Middle School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Gordon-Rushville Public Schools", "school": "Gordon-Rushville Elementary at Gordon", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Gordon-Rushville Public Schools", "school": "Gordon-Rushville High School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Grand Island Public School", "school": "Jefferson Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Grand Island Public School", "school": "Lincoln Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Grand Island Public School", "school": "Dodge Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Grand Island Public School", "school": "Howard Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Grand Island Public School", "school": "Knickrehm Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Grand Island Public School", "school": "Shoemaker Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Grand Island Public School", "school": "Stolley Park Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Grand Island Public School", "school": "Engleman Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Grand Island Public School", "school": "Newell Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Grand Island Public School", "school": "Seedling Mile Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Grand Island Public School", "school": "West Lawn Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Grand Island Public School", "school": "Wasmer Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Grand Island Public School", "school": "Westridge Middle School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Grand Island Public School", "school": "Walnut Jr. High School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Grand Island Public School", "school": "Barr Jr. High School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Grand Island Public School", "school": "Senior High School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Grand Island Public School", "school": "C Ray Gates Elementary School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Grand Island Public School", "school": "Early Learning Center", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Grand Island Public School", "school": "EF Starr Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Harvard Public School", "school": "Harvard School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Holy Name School", "school": "Holy Name School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Homer Community School", "school": "Homer Community School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Isanti Community School", "school": "Isanti School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Jesuit Academy", "school": "Jesuit Middle School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Kearney Public Schools", "school": "Bryant Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Kearney Public Schools", "school": "Central Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Kearney Public Schools", "school": "Emerson Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Kearney Public Schools", "school": "Kearney Education Center", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Kimball Public Schools", "school": "Kimball Jr.-Sr. High School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Kimball Public Schools", "school": "Mary Lynch Elementary School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lewiston Consolidated School", "school": "Lewiston Consolidated School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Leyton Public School", "school": "Leyton Elementary--Jr. High in Gurley", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Leyton Public School", "school": "Leyton High School - Dalton", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "Hartley Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lincoln Public Schools", "school": "McPhee Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "Elliott Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lincoln Public Schools", "school": "Clinton Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "Belmont Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lincoln Public Schools", "school": "Arnold Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "Everett Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lincoln Public Schools", "school": "Campbell Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "West Lincoln Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lincoln Public Schools", "school": "Saratoga Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "Randolph Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lincoln Public Schools", "school": "Prescott Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "Pershing Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lincoln Public Schools", "school": "Norwood Park Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "Lakeview Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lincoln Public Schools", "school": "Huntington Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "Riley Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lincoln Public Schools", "school": "Goodrich Middle School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "Culler Middle School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lincoln Public Schools", "school": "Lefler Middle School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "Dawes Middle School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Lincoln Public Schools", "school": "Park Middle School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Lincoln Public Schools", "school": "Brownell Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Loup County Public School", "school": "Loup County Public School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Minatare Public Schools", "school": "Minatare Elementary School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Minatare Public Schools", "school": "Minatare High School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Mitchell Public School", "school": "Mitchell Tiger Cub", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Mullen Public School", "school": "Mullen Public School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Nelson Mandela Elementary School", "school": "NELSON MANDELA ELEMENTARY", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Niobrara Public School", "school": "Niobrara Public School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "North Platte Public School", "school": "Buffalo Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "North Platte Public School", "school": "Jefferson Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "North Platte Public School", "school": "Lincoln Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "North Platte Public School", "school": "Washington Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "North Platte Public School", "school": "Eisenhower Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "North Platte Public School", "school": "Cody Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Ashland Park/Robbins", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Bancroft", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Benson West", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Castelar", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Central Park", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Field Club", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Franklin", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Highland", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Indian Hill", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Jackson", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "King", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Lothrop", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Miller Park", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Minne Lusa", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Skinner", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Spring Lake", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Walnut Hill", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Mount View", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Parrish", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Pawnee", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Picotte, Sara", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Lewis and Clark", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Ponca", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Chandler View", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Rosehill", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Springville", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Sunny Slope", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Fullerton", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Beals", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Wilson Focus School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Blackburn", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Pinewood", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Oak Valley", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Washington", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Florence", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Western Hills", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Sherman", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Wakonda", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Morton Jr High", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Dundee", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "South High", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Crestridge", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Beveridge Jr High", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Columbian", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Conestoga", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Bryan Jr High", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "McMillan Jr High", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Edison", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Prairie Wind", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Druid Hill", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Norris Jr High", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Adams", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "King Science Center", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Belle Ryan", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Belvedere", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Boyd", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Catlin", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Hale Jr High", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Monroe Jr High", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Masters", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Gomez Heritage", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "J.P. Lord", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Kennedy", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Kellom", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Joslyn", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Jefferson", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Dodge", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Central High", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Fontenelle", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Northwest High", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "North High", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Hartman", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Burke High", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Bryan High", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Benson High", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Gilder", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Harrison", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "ESL Teen Literacy Center", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Transition North Site", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Liberty Elementary School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Marrs Middle School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Alice Buffett Middle School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Standing Bear Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Early Childhood Center", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Integrated Learning Program", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Saddlebrook Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Career Center", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Gateway Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Davis Middle School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Secondary Success Program", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Transition-South Site", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Gifford Park Elementary School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Omaha Virtual School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Kennedy Early Childhood Center", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Forest Station Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Pine Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Buena Vista", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Omaha Public Schools", "school": "Westview", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Omaha Public Schools", "school": "Bluestem Middle School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Papillion-La Vista School", "school": "Parkview Heights Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Papillion-La Vista School", "school": "La Vista West Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Papillion-La Vista School", "school": "Golden Hills Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Papillion-La Vista School", "school": "G. Stanley Hall Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Papillion-La Vista School", "school": "Carriage Hill Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Ralston Public Schools", "school": "Karen Western Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Sacred Heart School - Omaha", "school": "Sacred Heart School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Sargent Public School", "school": "Sargent Public School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Schuyler Community Schools", "school": "Schuyler Central High School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Schuyler Community Schools", "school": "#24 Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Schuyler Community Schools", "school": "Schuyler Elementary School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Schuyler Community Schools", "school": "Schuyler Middle School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Scottsbluff Public Schools", "school": "Roosevelt Elementary", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Scottsbluff Public Schools", "school": "Lincoln Heights Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Scottsbluff Public Schools", "school": "Scottsbluff P.S. Preschool", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "South Sioux City School District #11", "school": "E N Swett Elementary", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Southern Public Schools", "school": "Southern Elementary School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Southern Public Schools", "school": "Southern Jr.-Sr. High School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Southern Public Schools", "school": "Preschool 3YR", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "St. Andrew's School", "school": "St. Andrew's School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "St. Augustine Indian Mission School", "school": "St. Augustine Indian Mission School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "St. Edward Public School", "school": "St. Edward Public School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "St. Peter and Paul School", "school": "St. Peter and Paul School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Superior Public School", "school": "Superior Public School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Thedford Rural High School", "school": "Thedford High School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Umo 'ho' Nation Public School", "school": "Umo", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Walthill Public School", "school": "Walthill Public School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Wauneta-Palisade Public School", "school": "Wauneta School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Wilcox-Hildreth School", "school": "Wilcox School", "nslp": 1, "cep": 1, "value": 2},
+    {"district": "Wilcox-Hildreth School", "school": "Hildreth School", "nslp": 1, "cep": 0, "value": 1},
+    {"district": "Winnebago Public School", "school": "Winnebago Public School", "nslp": 1, "cep": 1, "value": 2}];
+
+    // create income_guidelines object - look up income guidelines by household size
+    const income_guidelines = [{"year": "2025-2026", "household_size": 1, "income_frequency": "annual", "amount": 28953},
+    {"year": "2025-2026", "household_size": 1, "income_frequency": "monthly", "amount": 2413},
+    {"year": "2025-2026", "household_size": 1, "income_frequency": "twice per month", "amount": 1207},
+    {"year": "2025-2026", "household_size": 1, "income_frequency": "every two weeks", "amount": 1114},
+    {"year": "2025-2026", "household_size": 1, "income_frequency": "weekly", "amount": 557},
+    {"year": "2025-2026", "household_size": 2, "income_frequency": "annual", "amount": 39128},
+    {"year": "2025-2026", "household_size": 2, "income_frequency": "monthly", "amount": 3261},
+    {"year": "2025-2026", "household_size": 2, "income_frequency": "twice per month", "amount": 1631},
+    {"year": "2025-2026", "household_size": 2, "income_frequency": "every two weeks", "amount": 1505},
+    {"year": "2025-2026", "household_size": 2, "income_frequency": "weekly", "amount": 753},
+    {"year": "2025-2026", "household_size": 3, "income_frequency": "annual", "amount": 49303},
+    {"year": "2025-2026", "household_size": 3, "income_frequency": "monthly", "amount": 4109},
+    {"year": "2025-2026", "household_size": 3, "income_frequency": "twice per month", "amount": 2055},
+    {"year": "2025-2026", "household_size": 3, "income_frequency": "every two weeks", "amount": 1897},
+    {"year": "2025-2026", "household_size": 3, "income_frequency": "weekly", "amount": 949},
+    {"year": "2025-2026", "household_size": 4, "income_frequency": "annual", "amount": 59478},
+    {"year": "2025-2026", "household_size": 4, "income_frequency": "monthly", "amount": 4957},
+    {"year": "2025-2026", "household_size": 4, "income_frequency": "twice per month", "amount": 2479},
+    {"year": "2025-2026", "household_size": 4, "income_frequency": "every two weeks", "amount": 2288},
+    {"year": "2025-2026", "household_size": 4, "income_frequency": "weekly", "amount": 1144},
+    {"year": "2025-2026", "household_size": 5, "income_frequency": "annual", "amount": 69653},
+    {"year": "2025-2026", "household_size": 5, "income_frequency": "monthly", "amount": 5805},
+    {"year": "2025-2026", "household_size": 5, "income_frequency": "twice per month", "amount": 2903},
+    {"year": "2025-2026", "household_size": 5, "income_frequency": "every two weeks", "amount": 2679},
+    {"year": "2025-2026", "household_size": 5, "income_frequency": "weekly", "amount": 1340},
+    {"year": "2025-2026", "household_size": 6, "income_frequency": "annual", "amount": 79828},
+    {"year": "2025-2026", "household_size": 6, "income_frequency": "monthly", "amount": 6653},
+    {"year": "2025-2026", "household_size": 6, "income_frequency": "twice per month", "amount": 3327},
+    {"year": "2025-2026", "household_size": 6, "income_frequency": "every two weeks", "amount": 3071},
+    {"year": "2025-2026", "household_size": 6, "income_frequency": "weekly", "amount": 1536},
+    {"year": "2025-2026", "household_size": 7, "income_frequency": "annual", "amount": 90003},
+    {"year": "2025-2026", "household_size": 7, "income_frequency": "monthly", "amount": 7501},
+    {"year": "2025-2026", "household_size": 7, "income_frequency": "twice per month", "amount": 3751},
+    {"year": "2025-2026", "household_size": 7, "income_frequency": "every two weeks", "amount": 3462},
+    {"year": "2025-2026", "household_size": 7, "income_frequency": "weekly", "amount": 1731},
+    {"year": "2025-2026", "household_size": 8, "income_frequency": "annual", "amount": 100178},
+    {"year": "2025-2026", "household_size": 8, "income_frequency": "monthly", "amount": 8349},
+    {"year": "2025-2026", "household_size": 8, "income_frequency": "twice per month", "amount": 4175},
+    {"year": "2025-2026", "household_size": 8, "income_frequency": "every two weeks", "amount": 3853},
+    {"year": "2025-2026", "household_size": 8, "income_frequency": "weekly", "amount": 1927},
+    {"year": "2025-2026", "household_size": 9, "income_frequency": "annual", "amount": 110353},
+    {"year": "2025-2026", "household_size": 9, "income_frequency": "monthly", "amount": 9197},
+    {"year": "2025-2026", "household_size": 9, "income_frequency": "twice per month", "amount": 4599},
+    {"year": "2025-2026", "household_size": 9, "income_frequency": "every two weeks", "amount": 4245},
+    {"year": "2025-2026", "household_size": 9, "income_frequency": "weekly", "amount": 2123},
+    {"year": "2025-2026", "household_size": 10, "income_frequency": "annual", "amount": 120528},
+    {"year": "2025-2026", "household_size": 10, "income_frequency": "monthly", "amount": 10045},
+    {"year": "2025-2026", "household_size": 10, "income_frequency": "twice per month", "amount": 5023},
+    {"year": "2025-2026", "household_size": 10, "income_frequency": "every two weeks", "amount": 4637},
+    {"year": "2025-2026", "household_size": 10, "income_frequency": "weekly", "amount": 2319},
+    {"year": "2025-2026", "household_size": 11, "income_frequency": "annual", "amount": 130703},
+    {"year": "2025-2026", "household_size": 11, "income_frequency": "monthly", "amount": 10893},
+    {"year": "2025-2026", "household_size": 11, "income_frequency": "twice per month", "amount": 5447},
+    {"year": "2025-2026", "household_size": 11, "income_frequency": "every two weeks", "amount": 5029},
+    {"year": "2025-2026", "household_size": 11, "income_frequency": "weekly", "amount": 2515},
+    {"year": "2025-2026", "household_size": 12, "income_frequency": "annual", "amount": 140878},
+    {"year": "2025-2026", "household_size": 12, "income_frequency": "monthly", "amount": 11741},
+    {"year": "2025-2026", "household_size": 12, "income_frequency": "twice per month", "amount": 5871},
+    {"year": "2025-2026", "household_size": 12, "income_frequency": "every two weeks", "amount": 5421},
+    {"year": "2025-2026", "household_size": 12, "income_frequency": "weekly", "amount": 2711},
+    {"year": "2025-2026", "household_size": 13, "income_frequency": "annual", "amount": 151053},
+    {"year": "2025-2026", "household_size": 13, "income_frequency": "monthly", "amount": 12589},
+    {"year": "2025-2026", "household_size": 13, "income_frequency": "twice per month", "amount": 6295},
+    {"year": "2025-2026", "household_size": 13, "income_frequency": "every two weeks", "amount": 5813},
+    {"year": "2025-2026", "household_size": 13, "income_frequency": "weekly", "amount": 2907},
+    {"year": "2025-2026", "household_size": 14, "income_frequency": "annual", "amount": 161228},
+    {"year": "2025-2026", "household_size": 14, "income_frequency": "monthly", "amount": 13437},
+    {"year": "2025-2026", "household_size": 14, "income_frequency": "twice per month", "amount": 6719},
+    {"year": "2025-2026", "household_size": 14, "income_frequency": "every two weeks", "amount": 6205},
+    {"year": "2025-2026", "household_size": 14, "income_frequency": "weekly", "amount": 3103},
+    {"year": "2025-2026", "household_size": 15, "income_frequency": "annual", "amount": 171403},
+    {"year": "2025-2026", "household_size": 15, "income_frequency": "monthly", "amount": 14285},
+    {"year": "2025-2026", "household_size": 15, "income_frequency": "twice per month", "amount": 7143},
+    {"year": "2025-2026", "household_size": 15, "income_frequency": "every two weeks", "amount": 6597},
+    {"year": "2025-2026", "household_size": 15, "income_frequency": "weekly", "amount": 3299},
+    {"year": "2025-2026", "household_size": 16, "income_frequency": "annual", "amount": 181578},
+    {"year": "2025-2026", "household_size": 16, "income_frequency": "monthly", "amount": 15133},
+    {"year": "2025-2026", "household_size": 16, "income_frequency": "twice per month", "amount": 7567},
+    {"year": "2025-2026", "household_size": 16, "income_frequency": "every two weeks", "amount": 6989},
+    {"year": "2025-2026", "household_size": 16, "income_frequency": "weekly", "amount": 3495},
+    {"year": "2025-2026", "household_size": 17, "income_frequency": "annual", "amount": 191753},
+    {"year": "2025-2026", "household_size": 17, "income_frequency": "monthly", "amount": 15981},
+    {"year": "2025-2026", "household_size": 17, "income_frequency": "twice per month", "amount": 7991},
+    {"year": "2025-2026", "household_size": 17, "income_frequency": "every two weeks", "amount": 7381},
+    {"year": "2025-2026", "household_size": 17, "income_frequency": "weekly", "amount": 3691},
+    {"year": "2025-2026", "household_size": 18, "income_frequency": "annual", "amount": 201928},
+    {"year": "2025-2026", "household_size": 18, "income_frequency": "monthly", "amount": 16829},
+    {"year": "2025-2026", "household_size": 18, "income_frequency": "twice per month", "amount": 8415},
+    {"year": "2025-2026", "household_size": 18, "income_frequency": "every two weeks", "amount": 7773},
+    {"year": "2025-2026", "household_size": 18, "income_frequency": "weekly", "amount": 3887},
+    {"year": "2025-2026", "household_size": 19, "income_frequency": "annual", "amount": 212103},
+    {"year": "2025-2026", "household_size": 19, "income_frequency": "monthly", "amount": 17677},
+    {"year": "2025-2026", "household_size": 19, "income_frequency": "twice per month", "amount": 8839},
+    {"year": "2025-2026", "household_size": 19, "income_frequency": "every two weeks", "amount": 8165},
+    {"year": "2025-2026", "household_size": 19, "income_frequency": "weekly", "amount": 4083},
+    {"year": "2025-2026", "household_size": 20, "income_frequency": "annual", "amount": 222278},
+    {"year": "2025-2026", "household_size": 20, "income_frequency": "monthly", "amount": 18525},
+    {"year": "2025-2026", "household_size": 20, "income_frequency": "twice per month", "amount": 9263},
+    {"year": "2025-2026", "household_size": 20, "income_frequency": "every two weeks", "amount": 8557},
+    {"year": "2025-2026", "household_size": 20, "income_frequency": "weekly", "amount": 4279},
+    {"year": "2025-2026", "household_size": "additional", "income_frequency": "annual", "amount": 10175},
+    {"year": "2025-2026", "household_size": "additional", "income_frequency": "monthly", "amount": 848},
+    {"year": "2025-2026", "household_size": "additional", "income_frequency": "twice per month", "amount": 424},
+    {"year": "2025-2026", "household_size": "additional", "income_frequency": "every two weeks", "amount": 392},
+    {"year": "2025-2026", "household_size": "additional", "income_frequency": "weekly", "amount": 196},
+    {"year": "2024-2025", "household_size": 1, "income_frequency": "annual", "amount": 27861},
+    {"year": "2024-2025", "household_size": 1, "income_frequency": "monthly", "amount": 2322},
+    {"year": "2024-2025", "household_size": 1, "income_frequency": "twice per month", "amount": 1161},
+    {"year": "2024-2025", "household_size": 1, "income_frequency": "every two weeks", "amount": 1072},
+    {"year": "2024-2025", "household_size": 1, "income_frequency": "weekly", "amount": 536},
+    {"year": "2024-2025", "household_size": 2, "income_frequency": "annual", "amount": 37814},
+    {"year": "2024-2025", "household_size": 2, "income_frequency": "monthly", "amount": 3152},
+    {"year": "2024-2025", "household_size": 2, "income_frequency": "twice per month", "amount": 1576},
+    {"year": "2024-2025", "household_size": 2, "income_frequency": "every two weeks", "amount": 1455},
+    {"year": "2024-2025", "household_size": 2, "income_frequency": "weekly", "amount": 728},
+    {"year": "2024-2025", "household_size": 3, "income_frequency": "annual", "amount": 47767},
+    {"year": "2024-2025", "household_size": 3, "income_frequency": "monthly", "amount": 3981},
+    {"year": "2024-2025", "household_size": 3, "income_frequency": "twice per month", "amount": 1991},
+    {"year": "2024-2025", "household_size": 3, "income_frequency": "every two weeks", "amount": 1838},
+    {"year": "2024-2025", "household_size": 3, "income_frequency": "weekly", "amount": 919},
+    {"year": "2024-2025", "household_size": 4, "income_frequency": "annual", "amount": 57720},
+    {"year": "2024-2025", "household_size": 4, "income_frequency": "monthly", "amount": 4810},
+    {"year": "2024-2025", "household_size": 4, "income_frequency": "twice per month", "amount": 2405},
+    {"year": "2024-2025", "household_size": 4, "income_frequency": "every two weeks", "amount": 2220},
+    {"year": "2024-2025", "household_size": 4, "income_frequency": "weekly", "amount": 1110},
+    {"year": "2024-2025", "household_size": 5, "income_frequency": "annual", "amount": 67673},
+    {"year": "2024-2025", "household_size": 5, "income_frequency": "monthly", "amount": 5640},
+    {"year": "2024-2025", "household_size": 5, "income_frequency": "twice per month", "amount": 2820},
+    {"year": "2024-2025", "household_size": 5, "income_frequency": "every two weeks", "amount": 2603},
+    {"year": "2024-2025", "household_size": 5, "income_frequency": "weekly", "amount": 1302},
+    {"year": "2024-2025", "household_size": 6, "income_frequency": "annual", "amount": 77626},
+    {"year": "2024-2025", "household_size": 6, "income_frequency": "monthly", "amount": 6469},
+    {"year": "2024-2025", "household_size": 6, "income_frequency": "twice per month", "amount": 3235},
+    {"year": "2024-2025", "household_size": 6, "income_frequency": "every two weeks", "amount": 2986},
+    {"year": "2024-2025", "household_size": 6, "income_frequency": "weekly", "amount": 1493},
+    {"year": "2024-2025", "household_size": 7, "income_frequency": "annual", "amount": 87579},
+    {"year": "2024-2025", "household_size": 7, "income_frequency": "monthly", "amount": 7299},
+    {"year": "2024-2025", "household_size": 7, "income_frequency": "twice per month", "amount": 3650},
+    {"year": "2024-2025", "household_size": 7, "income_frequency": "every two weeks", "amount": 3369},
+    {"year": "2024-2025", "household_size": 7, "income_frequency": "weekly", "amount": 1685},
+    {"year": "2024-2025", "household_size": 8, "income_frequency": "annual", "amount": 97532},
+    {"year": "2024-2025", "household_size": 8, "income_frequency": "monthly", "amount": 8128},
+    {"year": "2024-2025", "household_size": 8, "income_frequency": "twice per month", "amount": 4064},
+    {"year": "2024-2025", "household_size": 8, "income_frequency": "every two weeks", "amount": 3752},
+    {"year": "2024-2025", "household_size": 8, "income_frequency": "weekly", "amount": 1876},
+    {"year": "2024-2025", "household_size": 9, "income_frequency": "annual", "amount": 107485},
+    {"year": "2024-2025", "household_size": 9, "income_frequency": "monthly", "amount": 8958},
+    {"year": "2024-2025", "household_size": 9, "income_frequency": "twice per month", "amount": 4479},
+    {"year": "2024-2025", "household_size": 9, "income_frequency": "every two weeks", "amount": 4135},
+    {"year": "2024-2025", "household_size": 9, "income_frequency": "weekly", "amount": 2068},
+    {"year": "2024-2025", "household_size": 10, "income_frequency": "annual", "amount": 117438},
+    {"year": "2024-2025", "household_size": 10, "income_frequency": "monthly", "amount": 9788},
+    {"year": "2024-2025", "household_size": 10, "income_frequency": "twice per month", "amount": 4894},
+    {"year": "2024-2025", "household_size": 10, "income_frequency": "every two weeks", "amount": 4518},
+    {"year": "2024-2025", "household_size": 10, "income_frequency": "weekly", "amount": 2260},
+    {"year": "2024-2025", "household_size": 11, "income_frequency": "annual", "amount": 127391},
+    {"year": "2024-2025", "household_size": 11, "income_frequency": "monthly", "amount": 10618},
+    {"year": "2024-2025", "household_size": 11, "income_frequency": "twice per month", "amount": 5309},
+    {"year": "2024-2025", "household_size": 11, "income_frequency": "every two weeks", "amount": 4901},
+    {"year": "2024-2025", "household_size": 11, "income_frequency": "weekly", "amount": 2452},
+    {"year": "2024-2025", "household_size": 12, "income_frequency": "annual", "amount": 137344},
+    {"year": "2024-2025", "household_size": 12, "income_frequency": "monthly", "amount": 11448},
+    {"year": "2024-2025", "household_size": 12, "income_frequency": "twice per month", "amount": 5724},
+    {"year": "2024-2025", "household_size": 12, "income_frequency": "every two weeks", "amount": 5284},
+    {"year": "2024-2025", "household_size": 12, "income_frequency": "weekly", "amount": 2644},
+    {"year": "2024-2025", "household_size": 13, "income_frequency": "annual", "amount": 147297},
+    {"year": "2024-2025", "household_size": 13, "income_frequency": "monthly", "amount": 12278},
+    {"year": "2024-2025", "household_size": 13, "income_frequency": "twice per month", "amount": 6139},
+    {"year": "2024-2025", "household_size": 13, "income_frequency": "every two weeks", "amount": 5667},
+    {"year": "2024-2025", "household_size": 13, "income_frequency": "weekly", "amount": 2836},
+    {"year": "2024-2025", "household_size": 14, "income_frequency": "annual", "amount": 157250},
+    {"year": "2024-2025", "household_size": 14, "income_frequency": "monthly", "amount": 13108},
+    {"year": "2024-2025", "household_size": 14, "income_frequency": "twice per month", "amount": 6554},
+    {"year": "2024-2025", "household_size": 14, "income_frequency": "every two weeks", "amount": 6050},
+    {"year": "2024-2025", "household_size": 14, "income_frequency": "weekly", "amount": 3028},
+    {"year": "2024-2025", "household_size": 15, "income_frequency": "annual", "amount": 167203},
+    {"year": "2024-2025", "household_size": 15, "income_frequency": "monthly", "amount": 13938},
+    {"year": "2024-2025", "household_size": 15, "income_frequency": "twice per month", "amount": 6969},
+    {"year": "2024-2025", "household_size": 15, "income_frequency": "every two weeks", "amount": 6433},
+    {"year": "2024-2025", "household_size": 15, "income_frequency": "weekly", "amount": 3220},
+    {"year": "2024-2025", "household_size": 16, "income_frequency": "annual", "amount": 177156},
+    {"year": "2024-2025", "household_size": 16, "income_frequency": "monthly", "amount": 14768},
+    {"year": "2024-2025", "household_size": 16, "income_frequency": "twice per month", "amount": 7384},
+    {"year": "2024-2025", "household_size": 16, "income_frequency": "every two weeks", "amount": 6816},
+    {"year": "2024-2025", "household_size": 16, "income_frequency": "weekly", "amount": 3412},
+    {"year": "2024-2025", "household_size": 17, "income_frequency": "annual", "amount": 187109},
+    {"year": "2024-2025", "household_size": 17, "income_frequency": "monthly", "amount": 15598},
+    {"year": "2024-2025", "household_size": 17, "income_frequency": "twice per month", "amount": 7799},
+    {"year": "2024-2025", "household_size": 17, "income_frequency": "every two weeks", "amount": 7199},
+    {"year": "2024-2025", "household_size": 17, "income_frequency": "weekly", "amount": 3604},
+    {"year": "2024-2025", "household_size": 18, "income_frequency": "annual", "amount": 197062},
+    {"year": "2024-2025", "household_size": 18, "income_frequency": "monthly", "amount": 16428},
+    {"year": "2024-2025", "household_size": 18, "income_frequency": "twice per month", "amount": 8214},
+    {"year": "2024-2025", "household_size": 18, "income_frequency": "every two weeks", "amount": 7582},
+    {"year": "2024-2025", "household_size": 18, "income_frequency": "weekly", "amount": 3796},
+    {"year": "2024-2025", "household_size": 19, "income_frequency": "annual", "amount": 207015},
+    {"year": "2024-2025", "household_size": 19, "income_frequency": "monthly", "amount": 17258},
+    {"year": "2024-2025", "household_size": 19, "income_frequency": "twice per month", "amount": 8629},
+    {"year": "2024-2025", "household_size": 19, "income_frequency": "every two weeks", "amount": 7965},
+    {"year": "2024-2025", "household_size": 19, "income_frequency": "weekly", "amount": 3988},
+    {"year": "2024-2025", "household_size": 20, "income_frequency": "annual", "amount": 216968},
+    {"year": "2024-2025", "household_size": 20, "income_frequency": "monthly", "amount": 18088},
+    {"year": "2024-2025", "household_size": 20, "income_frequency": "twice per month", "amount": 9044},
+    {"year": "2024-2025", "household_size": 20, "income_frequency": "every two weeks", "amount": 8348},
+    {"year": "2024-2025", "household_size": 20, "income_frequency": "weekly", "amount": 4180},
+    {"year": "2024-2025", "household_size": "additional", "income_frequency": "annual", "amount": 9953},
+    {"year": "2024-2025", "household_size": "additional", "income_frequency": "monthly", "amount": 830},
+    {"year": "2024-2025", "household_size": "additional", "income_frequency": "twice per month", "amount": 415},
+    {"year": "2024-2025", "household_size": "additional", "income_frequency": "every two weeks", "amount": 383},
+    {"year": "2024-2025", "household_size": "additional", "income_frequency": "weekly", "amount": 192}];
+
+    // populate question_map to facilitate question display
+    for (i = 0; i < codes.length; i++) {
+        temp_question = new Question(codes[i], question_text[i], answers[i], answer_values[i], answer_types[i]);
+        question_map.set(codes[i], temp_question);
+    };
+
+    // populate outcome_map to facilitate outcome display
+    for (i = 0; i < outcome_codes.length; i++) {
+        temp_outcome = new Outcome(outcome_codes[i], outcome_messages[i]);
+        outcome_map.set(outcome_codes[i], temp_outcome);
+    };
+
+    // // SCHOOL DROPDOWN STUFF
+
+    // // create schools object: schools by district, NSLP status, CEP status, value
+    // let schools = [{"district": "d0", "school": "s0", "nslp": 0, "cep": 0, "value": 0},
+    // {"district": "d1", "school": "s1", "nslp": 1, "cep": 0, "value": 1},
+    // {"district": "d2", "school": "s2", "nslp": 1, "cep": 1, "value": 2}];
+
+    // let schools_list = [];
+    // schools.forEach((school) => {
+    //     schools_list.push(school["school"]);
+    // });
+
+    // // need to create HTML elements!!
+
+    // let schools_input = Object.assign(document.createElement("input"), {
+    //     type: "text",
+    //     id: "SCH_t",
+    //     name: "SCH",
+    //     size: "50",
+    //     placeholder: "Click here and type the school name",
+    //     autocomplete: "off"
+    // });
+    // document.getElementById("input").appendChild(schools_input);
+
+    // const dropdown_container = document.getElementById("dropdown");
+    // dropdown_container.style.display = "none";
+
+    // const help_container = document.getElementById("help");
+    // help_container.style.display = "none";
+
+    // schools_input.addEventListener("input", function () {
+    //     let query = schools_input.value.toLowerCase();
+    //     dropdown_container.innerHTML = null;
+
+    //     if (query) {
+    //         let matches = schools_list.filter(value => 
+    //             value.toLowerCase().includes(query)
+    //         );
+
+    //         if (matches.length > 0) {
+    //             dropdown_container.style.display = "block";
+    //             matches.forEach(match => {
+    //                 const item = document.createElement("div");
+    //                 item.textContent = match;
+    //                 item.addEventListener("click", function () {
+    //                     schools_input.value = match; // Set input value
+    //                     dropdown_container.style.display = "none"; // Hide dropdown
+    //                     help_container.style.display = "none";
+    //                 });
+    //                 dropdown_container.appendChild(item);
+    //             });
+    //         } else {
+    //             dropdown_container.style.display = "none";
+    //         }
+    //     } else {
+    //         dropdown_container.style.display = "none";
+    //     }
+    // });
+
+    // // Hide dropdown when clicking outside
+    // document.addEventListener("click", function (event) {
+    //     if (!event.target.closest(".school_input_container")) {
+    //         dropdown_container.style.display = "none";
+    //     }
+    // });
+
+    // // help message if school_input text does not match a school
+    // schools_input.addEventListener("blur", function () {
+    //     switch (true) {
+    //         case schools_input.value == "":
+    //             help_container.innerHTML = null;
+    //             help_container.style.display = "none";
+    //             break;
+    //         case (!schools_list.includes(schools_input.value)):
+    //             help_container.innerHTML = "Please select a school from the list.";
+    //             help_container.style.display = "block";
+    //             break;
+    //         default:
+    //             help_container.innerHTML = null;
+    //             help_container.style.display = "none";
+    //             break;
+    //         }
+    //     });
+
+    // // get school value
+    // schools_input.addEventListener("change", function() {
+    //     switch(true) {
+    //         case !schools_list.includes(schools_input.value):
+    //             break;
+    //         case schools_list.includes(schools_input.value):
+    //             selected_school = schools_input.value;    
+    //             let school_index = schools_list.indexOf(selected_school);
+    //             let school_program_value = schools[school_index]["value"];
+    //             // map to user responses
+    //             // console.log(selected_school + ": " + school_program_value.toString()); 
+    //             break;
+    //     };
+    // });
+
+display_question("SCP");
+
+// document.getElementById("eligibility_determination").innerHTML = outcome_map.keys().toString;
+
+</script>
