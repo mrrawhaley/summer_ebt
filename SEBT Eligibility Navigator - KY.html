@@ -231,7 +231,10 @@
     // create next_question_code - get what next question code should be; used to 
     let next_question_code = "";
 
-    // display_question: displays question and answer options
+    // create next_question_code - get what next question code should be; used to 
+    let income_guidelines_string_to_replace = "{ income eligibility threshold lookup for household size }";
+
+        // display_question: displays question and answer options
     function display_question(code) {
         // see if question is already displayed --> if yes, go to it; if not, display question
 
@@ -284,11 +287,12 @@
                     });
                     INS_input.addEventListener("change", function(event) {
                         response_map.set("INS", INS_input.value)
-                        const string_to_replace = "{ income eligibility threshold lookup for household size }";
+                        // let string_to_replace = "{ income eligibility threshold lookup for household size }";
                     let user_income_guidelines = [];
                     income_guidelines.forEach((guideline) => {
                         if (guideline["year"] == SEBT_year && guideline["household_size"] == response_map.get("INS")) {
                             user_income_guidelines.push(guideline);
+                            console.log(guideline);
                         };
                     });
                     // create user_income_guidelines_string object - string containing the pattern "$[amount] per [frequency]" for the six income frequencies
@@ -307,7 +311,8 @@
                         user_income_guidelines_string = user_income_guidelines_string_array.toString();
                     };
                     create_user_income_guidelines_string();
-                    let new_INC_question = question_map.get("INC").question.replace(string_to_replace, user_income_guidelines_string);
+                    let new_INC_question = question_map.get("INC").question.replace(income_guidelines_string_to_replace, user_income_guidelines_string);
+                    income_guidelines_string_to_replace = user_income_guidelines_string;
                     question_map.get("INC").question = new_INC_question;
                     });
                     question_container.append(INS_input);
@@ -841,10 +846,10 @@
     const codes = ["SCP", "SCS", "ACE", "SCH", "FRP", "INS", "INC"];
 
     // create question_text variable - array of eligibility navigator questions; must replace income eligibility threshold language with dynamic lookup for guidelines based on household size input
-    const question_text = ["Is your child enrolled in any of the following programs?", "Has your child been identified as any of the following?", "Since July 1, 2024, was your child between the ages of 5 and 18?", "Which school does your child attend?", "Have you received a letter from your child's school/district stating that your child was approved for free or reduced-price school meals for the 2024-2025 school year?", "How many people are in your household?", "Is your household income below { income eligibility threshold lookup for household size }?"]
+    const question_text = ["Is your child enrolled in any of the following programs?", "Has your child been identified as any of the following?", "Since August 1, 2024, was your child between the ages of 6 and 18?", "Which school does your child attend?", "Have you received a letter from your child's school/district stating that your child was approved for free or reduced-price school meals for the 2024-2025 school year?", "How many people are in your household?", "Is your household income below { income eligibility threshold lookup for household size }?"];
 
     // create answers variable - array of answer options for each variable; must replace school lookup list with list of schools/districts
-    const answers = [["Supplemental Nutrition Assistance Program (SNAP)", "Medicaid", "Temporary Assistance for Needy Families (TANF)", "My child is not enrolled in any of these programs", "I don't know"], ["Homeless", "Foster", "Migrant", "My child has not been identified as any of these", "I don't know"], ["Yes", "No"], ["(lookup list - NSLP)", "(lookup list - CEP)", "My child does not attend any of these schools", "My child is home schooled"], ["Yes", "No", "I don't know"], ["{ user input }"], ["Yes", "No", "I don't know"]];
+    const answers = [["Supplemental Nutrition Assistance Program (SNAP)", "Kentucky Transitional Assistance Program (KTAP)", "My child is not enrolled in any of these programs", "I don't know"], ["Kinship Care", "My child has not been identified as any of these", "I don't know"], ["Yes", "No"], ["(lookup list - NSLP)", "(lookup list - CEP)", "My child does not attend any of these schools", "My child is home schooled"], ["Yes", "No", "I don't know"], ["{ user input }"], ["Yes", "No", "I don't know"]];
 
     // create outcome_codes variable - holds outcome codes to facilitate displaying outcomes
     const outcome_codes = ["mSCP", "mSCS", "mFRP", "mELI", "mUNK", "mNOT"];
@@ -853,7 +858,7 @@
     const outcome_messages = ["Your child should automatically receive Summer EBT benefits because of their enrollment in the following program(s): { programs selected from question }. *You should not have to apply* for benefits for your child.", "Your child should automatically receive Summer EBT benefits because of their identification as the following: { statuses selected from question }. *You should not have to apply* for benefits for your child.", "Your child should automatically receive Summer EBT benefits because of their eligibility for free or reduced-price school meals. *You should not have to apply* for benefits for your child.", "You should apply for Summer EBT benefits for your child. Based on your household income, your child should be eligible for Summer EBT benefits.", "You may need to apply for Summer EBT benefits for your child. To be eligible, a child must meet one of the following requirements: <br/> 1) Be certified to receive free/reduced-price school meals *and* attend a school participating in the National School Lunch Program or School Breakfast Program, or <br/> 2) Be participating in Supplemental Nutrition Assistance Program (SNAP), Medicaid, Temporary Assistance for Needy Families (TANF) or identified as Homeless, Foster, Migrant *and* be between the ages of 5 and 18, or <br/> 3) Attend a school participating in the National School Lunch Program or School Breakfast Program *and* have a household income that meets the requirements for Summer EBT.", "You child might not be eligible for Summer EBT but you should apply if you think your child is eligible. To be eligible, a child must meet one of the following requirements: <br/> 1) Be certified to receive free/reduced-price school meals *and* attend a school participating in the National School Lunch Program or School Breakfast Program, or <br/> 2) Be participating in Supplemental Nutrition Assistance Program (SNAP), Medicaid, Temporary Assistance for Needy Families (TANF) or identified as Homeless, Foster, Migrant *and* be between the ages of 5 and 18, or <br/> 3) Attend a school participating in the National School Lunch Program or School Breakfast Program *and* have a household income that meets the requirements for Summer EBT."];
 
     // create answer_values objects - array of arrays of values mapped to each answer option for each question; used to facilitate mapping user input
-    const answer_values = [[1, 2, 1, 0, 0], [1, 1, 1, 0, 0], [1, 0], [1, 2, 0, 0], [1, 0, 0], [], [1, 0, 2]];
+    const answer_values = [[1, 1, 0, 0], [1, 0, 0], [1, 0], [1, 2, 0, 0], [1, 0, 0], [], [1, 0, 2]];
 
     // create answer_types object - define input type for answers
     const answer_types = ["checkbox", "checkbox", "radio", "radio", "radio", "text", "radio"];
