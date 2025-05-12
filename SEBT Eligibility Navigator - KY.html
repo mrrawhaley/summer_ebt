@@ -15,13 +15,6 @@
                 font-family: "Open Sans", Arial, Helvetica, sans-serif;
 			}
             
-            /* body {
-                height: 100dvh;
-                overflow-y: scroll;
-                scroll-snap-type: y mandatory;
-                scroll-behavior: smooth;
-            } */
-            
             #question_navigator {
                 height: 100dvh;
                 overflow-y: scroll;
@@ -36,15 +29,6 @@
                 position: relative;
                 /* width: 250px; */
             }
-    
-            /*
-            Input field 
-            #combo-box {
-                width: 100%;
-                padding: 8px;
-                box-sizing: border-box;
-            }
-            */
     
             /* Dropdown list */
             #school_input_dropdown_div {
@@ -154,6 +138,15 @@
                         <li>Has been approved for free or reduced-price school meals</li>
                         <li>Has a household income that is eligible to receive SUN Bucks</li>
                     </ul>
+                </p>
+                <p>
+                    This form does <em>not</em> save your answers, and your answers will not be shared with anyone.
+                </p>
+                <h2>
+                    How to complete this form
+                </h2>
+                <p>
+                    For each question, tap/click the radio button (<input type="radio" />) or checkboxes (<input type="checkbox" />) that best describe your child, and then tap/click the "next question" button. If you need to change your answer to a previous question, tap/click the "go back" button.
                 </p>
                 <h3>
                     Tap or click the "next question" button to get started!
@@ -316,33 +309,6 @@
                     question_map.get("INC").question = new_INC_question;
                     });
                     question_container.append(INS_input);
-                    // create string_to_replace object - string from Google Sheets navigator builder to replace with income guidelines by household size from question INS
-                    // START HERE
-                    // const string_to_replace = "{ income eligibility threshold lookup for household size }";
-                    // let user_income_guidelines = [];
-                    // income_guidelines.forEach((guideline) => {
-                    //     if (guideline["year"] == SEBT_year && guideline["household_size"] == response_map.get("INS")) {
-                    //         user_income_guidelines.push(guideline);
-                    //     };
-                    // });
-                    // // create user_income_guidelines_string object - string containing the pattern "$[amount] per [frequency]" for the six income frequencies
-                    // let user_income_guidelines_string;
-                    // function create_user_income_guidelines_string() {
-                    //     let user_income_guidelines_string_array = [];
-                    //     const usd = new Intl.NumberFormat('en-US', {
-                    //     style: 'currency',
-                    //     currency: 'USD'
-                    //     });
-                    //     user_income_guidelines.forEach((guideline) => {
-                    //         let dollar_amount = usd.format(guideline["amount"]);
-                    //         let frequency = guideline["income_frequency"];
-                    //         user_income_guidelines_string_array.push(" " + dollar_amount + " " + frequency);
-                    //     });
-                    //     user_income_guidelines_string = user_income_guidelines_string_array.toString();
-                    // };
-                    // create_user_income_guidelines_string();
-                    // let new_INC_question = question_map.get("INC").question.replace(string_to_replace, user_income_guidelines_string);
-                    // question_map.get("INC").question = new_INC_question;
                     break;
                 // case "INC":
                 //     break;
@@ -480,8 +446,6 @@
                         temp_input.id = code + "_" + i.toString();
                         temp_input.name = code;
                         temp_input.value = input_values[i];
-                        // console.log(temp_input.value);
-                        // add event listener - if value = 0 then inputs in input group with value > 0 are unchecked (i.e., "I don't know" or "does not apply"-like answers uncheck other answers)
                         temp_input.addEventListener("click", function(event) {
                             let answer_group_name = event.target.name;
                             // console.log(answer_group_name);
@@ -521,30 +485,6 @@
                                     });
                                     break;
                             };
-                            // });
-
-                            // OK TO REMOVE COMMENTED CODE BELOW
-                            // not sure why it isn't picking up radio button values; code above works fine, maybe "querySelectorAll" is returning only an array?
-                            // switch(question_map.get(code).answer_type) {
-                            //     case "radio":
-                            //         selected_response = document.querySelectorAll('input[name=' + code + ']:checked');
-                            //         user_response = selected_response.value;
-                            //         break;
-                            //     case "checkbox":
-                            //         // user_response = null;
-                            //         user_response = [];
-                            //         selected_responses = document.querySelectorAll('input[name=' + code + ']:checked');
-                            //         selected_responses.forEach(response => {
-                            //             user_response.push(response.value);
-                            //         }
-                            //         );
-                            //         break;
-                            //     default:
-                            //         break;
-                            // }; 
-                            // let answer_index = codes.indexOf(answer_group_name);
-                            // let answer_value = answer_values[answer_index][user_response];
-                            
                             response_map.set(answer_group_name, user_response);
                             response_recode(code);
                             // console.log(response_map);
@@ -595,22 +535,7 @@
                 };
 		    };
             document.getElementById("question_navigator").lastElementChild.scrollIntoView({behavior: "smooth", block: "start"});
-		
-        // let current_question_code = navigator_insertion.slice(0, 3);
-        // let answered_questions = Array.from(response_map.keys());
-        // let previous_question_code = answered_questions[answered_questions.length - 1];
-        // response_map.delete(previous_question_code);
-        // document.getElementById(previous_question_code + "_div").remove();
-        // console.log(answered_questions);
-    };
 
-    // school_selector: create input box for school name
-    // function school_selector() {    
-    // };
-
-    // streamlined cert conditions: X SCP = 1 & ACE = 1 | X SCS = 1 & ACE = 1 | X SCH = 1 & FRP = 1 | X SCP = 1 & SCH = 1 | X SCS = 1 & SCH = 1 | X SCS = 1 & SCH = 2 | X SCM = 1 & INC = 1 & ACE = 1 | X SCM = 1 & INC = 1 & SCH = 1
-    // application conditions: X SCH = 1 & INC = 1 | X SCM = 1 & INC = 0 | SCM = 1 & INC = 1 & ACE = -1 & SCH = 0
-    
     // response_recode: recode responses from arrays to single values
     function response_recode(code) {
         let user_response = response_map.get(code);
@@ -714,22 +639,6 @@
             question_order();
         };
     };
-
-    // function set_next_button() {
-    //     console.log("setting button...")
-    //     let next_button_element = document.getElementById("next_button");
-    //     // next_button_element.removeEventListener("click", determine_eligibility);
-    //     // next_button_element.removeEventListener("click", reset_navigator);
-    //     if (eligibility_determined == true) {
-    //         next_button_element.value = "start over";
-    //         next_button_element.removeEventListener("click", determine_eligibility);
-    //         next_button_element.addEventListener("click", reset_navigator);
-    //     } else {
-    //         next_button_element.value = "next question";
-    //         next_button_element.removeEventListener("click", reset_navigator);
-    //         next_button_element.addEventListener("click", determine_eligibility);
-    //     };
-    // };
 
     function reset_navigator() {
         response_map.clear();
@@ -2395,108 +2304,7 @@
         outcome_map.set(outcome_codes[i], temp_outcome);
     };
 
-    // // SCHOOL DROPDOWN STUFF
-
-    // // create schools object: schools by district, NSLP status, CEP status, value
-    // let schools = [{"district": "d0", "school": "s0", "nslp": 0, "cep": 0, "value": 0},
-    // {"district": "d1", "school": "s1", "nslp": 1, "cep": 0, "value": 1},
-    // {"district": "d2", "school": "s2", "nslp": 1, "cep": 1, "value": 2}];
-
-    // let schools_list = [];
-    // schools.forEach((school) => {
-    //     schools_list.push(school["school"]);
-    // });
-
-    // // need to create HTML elements!!
-
-    // let schools_input = Object.assign(document.createElement("input"), {
-    //     type: "text",
-    //     id: "SCH_t",
-    //     name: "SCH",
-    //     size: "50",
-    //     placeholder: "Click here and type the school name",
-    //     autocomplete: "off"
-    // });
-    // document.getElementById("input").appendChild(schools_input);
-
-    // const dropdown_container = document.getElementById("dropdown");
-    // dropdown_container.style.display = "none";
-
-    // const help_container = document.getElementById("help");
-    // help_container.style.display = "none";
-
-    // schools_input.addEventListener("input", function () {
-    //     let query = schools_input.value.toLowerCase();
-    //     dropdown_container.innerHTML = null;
-
-    //     if (query) {
-    //         let matches = schools_list.filter(value => 
-    //             value.toLowerCase().includes(query)
-    //         );
-
-    //         if (matches.length > 0) {
-    //             dropdown_container.style.display = "block";
-    //             matches.forEach(match => {
-    //                 const item = document.createElement("div");
-    //                 item.textContent = match;
-    //                 item.addEventListener("click", function () {
-    //                     schools_input.value = match; // Set input value
-    //                     dropdown_container.style.display = "none"; // Hide dropdown
-    //                     help_container.style.display = "none";
-    //                 });
-    //                 dropdown_container.appendChild(item);
-    //             });
-    //         } else {
-    //             dropdown_container.style.display = "none";
-    //         }
-    //     } else {
-    //         dropdown_container.style.display = "none";
-    //     }
-    // });
-
-    // // Hide dropdown when clicking outside
-    // document.addEventListener("click", function (event) {
-    //     if (!event.target.closest(".school_input_container")) {
-    //         dropdown_container.style.display = "none";
-    //     }
-    // });
-
-    // // help message if school_input text does not match a school
-    // schools_input.addEventListener("blur", function () {
-    //     switch (true) {
-    //         case schools_input.value == "":
-    //             help_container.innerHTML = null;
-    //             help_container.style.display = "none";
-    //             break;
-    //         case (!schools_list.includes(schools_input.value)):
-    //             help_container.innerHTML = "Please select a school from the list.";
-    //             help_container.style.display = "block";
-    //             break;
-    //         default:
-    //             help_container.innerHTML = null;
-    //             help_container.style.display = "none";
-    //             break;
-    //         }
-    //     });
-
-    // // get school value
-    // schools_input.addEventListener("change", function() {
-    //     switch(true) {
-    //         case !schools_list.includes(schools_input.value):
-    //             break;
-    //         case schools_list.includes(schools_input.value):
-    //             selected_school = schools_input.value;    
-    //             let school_index = schools_list.indexOf(selected_school);
-    //             let school_program_value = schools[school_index]["value"];
-    //             // map to user responses
-    //             // console.log(selected_school + ": " + school_program_value.toString()); 
-    //             break;
-    //     };
-    // });
-
 display_question("SCP");
 document.getElementById("introduction").scrollIntoView({behavior: "instant", block: "start"});
-
-// document.getElementById("eligibility_determination").innerHTML = outcome_map.keys().toString;
 
 </script>
