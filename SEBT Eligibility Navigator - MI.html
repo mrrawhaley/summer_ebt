@@ -2,7 +2,7 @@
 
     <head>
 
-		<meta name="viewport" content="width=device-width,  initial-scale=1.0" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +22,7 @@
                 scroll-behavior: smooth;
             } */
             
-            #question_navigator {
+            body {
                 height: 100dvh;
                 overflow-y: scroll;
                 scroll-snap-type: y mandatory;
@@ -30,6 +30,15 @@
                 -ms-overflow-style: none;  /* IE and Edge */
                 scrollbar-width: none;  /* Firefox */
             }
+
+            /* #question_navigator {
+                height: 100dvh;
+                overflow-y: scroll;
+                scroll-snap-type: y mandatory;
+                scroll-behavior: smooth;
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            } */
 
             /* Container for the combo box */
             .school_input_container {
@@ -86,7 +95,7 @@
             }
 
             #introduction {
-				height: 100dvh;
+				height: 300dvh;
                 overflow-y: auto;
 				padding: 0.1em 0.1em 0.1em 0.1em;
                 scroll-snap-align: start;
@@ -137,35 +146,36 @@
 
     <body>
         <div class="container">
-            <div id="introduction">
-                <h1>
-                    Learn your next steps for receiving $120 for groceries this summer
-                </h1>
-                <p>
-			The Michigan Summer EBT Eligibility Checker helps you understand if you need to sign up for your child to receive Summer EBT.
-		</p>
-		<p>
-			Many children in Michigan are automatically enrolled in Summer EBT, but some families need to apply for their children to receive the program. Use the eligibility checker to see if your child qualifies automatically or if you should sign up. If you have multiple children, please check for each child individually.
-		</p>
-		<p>
-			<b>This is not the Michigan Summer EBT application.</b> If you are looking for the application you can find that at this link: <a href="https://www.michigan.gov/MIBridges">michigan.gov/MIBridges</a> (click on "Apply for Special Programs"). You will be provided with the link to the application at the end of the eligibility checker if it determines you should apply.			
-		</p>
-                <h2>
-                    Before you get started on this form
-                </h2>
-                <p>
-                    It will take most people less than one minute to complete this form. You will not need to provide any sensitive information about your child, but you may be asked if your child:
-                    <ul>
-                        <li>Is enrolled in programs like SNAP</li>
-                        <li>Has been approved for free or reduced-price school meals</li>
-                        <li>Has a household income that is eligible to receive Summer EBT</li>
-                    </ul>
-                </p>
-                <h3>
-                    Tap or click the "next question" button to get started!
-                </h3>
+            <div id="question_navigator">
+                <div id="introduction">
+                    <h1>
+                        Learn your next steps for receiving $120 for groceries this summer
+                    </h1>
+                    <p>
+                        The Michigan Summer EBT Eligibility Checker helps you understand if you need to sign up for your child to receive Summer EBT.
+                    </p>
+                    <p>
+                        Many children in Michigan are automatically enrolled in Summer EBT, but some families need to apply for their children to receive the program. Use the eligibility checker to see if your child qualifies automatically or if you should sign up. If you have multiple children, please check for each child individually.
+                    </p>
+                    <p>
+                        <b>This is not the Michigan Summer EBT application.</b> If you are looking for the application you can find that at this link: <a href="https://www.michigan.gov/MIBridges">michigan.gov/MIBridges</a> (click on "Apply for Special Programs"). You will be provided with the link to the application at the end of the eligibility checker if it determines you should apply.			
+                    </p>
+                    <h2>
+                        Before you get started on this form
+                    </h2>
+                    <p>
+                        It will take most people less than one minute to complete this form. You will not need to provide any sensitive information about your child, but you may be asked if your child:
+                        <ul>
+                            <li>Is enrolled in programs like SNAP</li>
+                            <li>Has been approved for free or reduced-price school meals</li>
+                            <li>Has a household income that is eligible to receive Summer EBT</li>
+                        </ul>
+                    </p>
+                    <h2>
+                        Tap or click the "next question" button to get started!
+                    </h2>
+                </div>
             </div>
-            <div id="question_navigator"></div>
             <div id="eligibility_determination" class="eligibility"></div>
             <div id="navigation_buttons" class="navigation">
                 <input type="button" id="back_button" value="go back" onclick="previous_question()" class="navigation_button" />
