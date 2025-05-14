@@ -119,12 +119,12 @@
 			}
 
 			#back_button {
-				left: 20dvh;
+				left: 5dvh;
                 background-color: dodgerblue;
 			}
 
 			#next_button {
-				right: 20dvh;
+				right: 5dvh;
                 background-color: darkorange;
 			}
 
@@ -164,9 +164,9 @@
                 <p>
                     For each question, tap/click the radio button (<input type="radio" />) or checkboxes (<input type="checkbox" />) that best describe your child, and then tap/click the "next question" button. If you need to change your answer to a previous question, tap/click the "go back" button.
                 </p>
-                <h2>
+                <h3>
                     Tap or click the "next question" button to get started!
-                </h2>
+                </h3>
             </div>
             <div id="question_navigator"></div>
             <div id="eligibility_determination" class="eligibility"></div>
@@ -464,6 +464,19 @@
                             selected_responses = document.querySelectorAll('input[name=' + code + ']:checked');
                             switch(code) {
                                 case "SCP":
+                                    SCP_responses = [];
+                                    Array.from(selected_responses.entries()).forEach((entry) => {
+                                        SCP_responses.push(entry[1].id);
+                                        console.log(entry[1].id);
+                                    });
+                                    if (SCP_responses.includes("SCP_3")) {
+                                        response_map.set("SCS", 1);
+                                        // let SCS_outcome_text = outcome_messages[outcome_codes.indexOf("mSCS")];
+                                        // let SCS_outcome_text_to_change = "{ statuses selected from question }";
+                                    } else {
+                                        response_map.set("SCS", 0);
+                                    };
+                                    console.log(response_map.toString());
                                 case "SCS":
                                     // send selected item objects to temp list --> for each item object, send index to array --> use array to get program names and populate in mSCP
                                     let m_list_temp = [];
@@ -554,7 +567,7 @@
                     case user_response.includes("1"):
                         response_map.set(code, 1);
                         break;
-                    case (user_response.includes("2") && user_response.length === 1):
+                    case (user_response.includes("2") && user_response.length == 1):
                         response_map.set(code, 2);
                         break;
                     default:
@@ -695,13 +708,15 @@
             case response_count == 0:
                 next_question_code = "SCP";
                 break;
-            // when to ask SCS
-            case (response_count == 1 && SCP == 0):
-            case (response_count == 2 && SCP == 2 && ACE == 1):
-                next_question_code = "SCS"
-                break;
+            // REMOVE SCS FOR THIS VERSION
+            // // when to ask SCS
+            // case (response_count == 1 && SCP == 0):
+            // case (response_count == 2 && SCP == 2 && ACE == 1):
+            //     next_question_code = "SCS"
+            //     break;
             // when to ask ACE
-            case (response_count == 2 && SCP == 0 && SCS == 1): 
+            case (response_count == 2 && SCP == 0 && SCS == 1):
+            case (response_count == 2 && SCP == 1 && (SCS == 0 || SCS == 1)):
             case (response_count == 1 && SCP == 1):
             case (response_count == 1 && SCP == 2):
                 next_question_code = "ACE";
@@ -763,7 +778,7 @@
     const question_text = ["Is your child enrolled in any of the following programs?", "Has your child been identified as any of the following?", "Since August 1, 2024, was your child between the ages of 6 and 18?", "Which school does your child attend?", "Have you received a letter from your child's school/district stating that your child was approved for free or reduced-price school meals for the 2024-2025 school year?", "How many people are in your household?", "Is your household income below { income eligibility threshold lookup for household size }?"];
 
     // create answers variable - array of answer options for each variable; must replace school lookup list with list of schools/districts
-    const answers = [["Supplemental Nutrition Assistance Program (SNAP)", "Kentucky Transitional Assistance Program (KTAP)", "My child is not enrolled in any of these programs", "I don't know"], ["Kinship Care", "My child has not been identified as any of these", "I don't know"], ["Yes", "No"], ["(lookup list - NSLP)", "(lookup list - CEP)", "My child does not attend any of these schools", "My child is home schooled"], ["Yes", "No", "I don't know"], ["{ user input }"], ["Yes", "No", "I don't know"]];
+    const answers = [["Supplemental Nutrition Assistance Program (SNAP)", "Income-based Medical Assistance (Medicaid)", "Kentucky Transitional Assistance Program (KTAP)", "Kinship Care", "My child is not enrolled in any of these programs", "I don't know"], ["Kinship Care", "My child has not been identified as any of these", "I don't know"], ["Yes", "No"], ["(lookup list - NSLP)", "(lookup list - CEP)", "My child does not attend any of these schools", "My child is home schooled"], ["Yes", "No", "I don't know"], ["{ user input }"], ["Yes", "No", "I don't know"]];
 
     // create outcome_codes variable - holds outcome codes to facilitate displaying outcomes
     const outcome_codes = ["mSCP", "mSCS", "mFRP", "mELI", "mUNK", "mNOT"];
@@ -772,7 +787,7 @@
     const outcome_messages = ["Your child should automatically receive Summer EBT benefits because of their enrollment in the following program(s): { programs selected from question }. *You should not have to apply* for benefits for your child. <br/>  <br/> Benefits will be issued starting { date }. If you have an existing SNAP or KTAP card, then benefits will be loaded onto this card. If you do not have an existing SNAP or KTAP card, then benefits will be issued on a new EBT card that will be sent to you. If you had a SNAP or KTAP card in the past but do not have the card anymore or have lost the card, please call { phone number } to request a new card.", "Your child should automatically receive Summer EBT benefits because of their identification as the following: { statuses selected from question }. *You should not have to apply* for benefits for your child. <br/>  <br/> Benefits will be issued starting { date }. If you have an existing SNAP or KTAP card, then benefits will be loaded onto this card. If you do not have an existing SNAP or KTAP card, then benefits will be issued on a new EBT card that will be sent to you. If you had a SNAP or KTAP card in the past but do not have the card anymore or have lost the card, please call { phone number } to request a new card.", "Your child should automatically receive Summer EBT benefits because they were approved for free or reduced-price school meals. *You should not have to apply* for benefits for your child. <br/>  <br/> Benefits will be issued starting { date }. If you have an existing SNAP or KTAP card, then benefits will be loaded onto this card. If you do not have an existing SNAP or KTAP card, then benefits will be issued on a new EBT card that will be sent to you. If you had a SNAP or KTAP card in the past but do not have the card anymore or have lost the card, please call { phone number } to request a new card.", "You should apply for Summer EBT benefits for your child. Based on your household income, your child should be eligible for Summer EBT benefits. <br/>  <br/> To fill out the application online, go to either <a href=\"https://kysebt.ky.gov/\">https://kysebt.ky.gov/</a> or <a href=\"https://kynect.ky.gov/benefits/\">https://kynect.ky.gov/benefits/</a>.", "You may need to apply for Summer EBT benefits for your child. To be eligible, a child must meet one of the following requirements: <br/> 1) Be certified to receive free/reduced-price school meals *and* attend a school participating in the National School Lunch Program or School Breakfast Program, or <br/> 2) Be participating in Supplemental Nutrition Assistance Program (SNAP), Kentucky Transitional Assistance Program (KTAP) or identified as Kinship Care *and* be between the ages of 6 and 18, or <br/> 3) Attend a school participating in the National School Lunch Program or School Breakfast Program *and* have a household income that meets the requirements for Summer EBT. <br/>  <br/> To fill out the application online, go to either <a href=\"https://kysebt.ky.gov/\">https://kysebt.ky.gov/</a> or <a href=\"https://kynect.ky.gov/benefits/\">https://kynect.ky.gov/benefits/</a>.", "Your child might not be eligible for Summer EBT but you should apply if you think your child is eligible. To be eligible, a child must meet one of the following requirements: <br/> 1) Be certified to receive free/reduced-price school meals *and* attend a school participating in the National School Lunch Program or School Breakfast Program, or <br/> 2) Be participating in Supplemental Nutrition Assistance Program (SNAP), Kentucky Transitional Assistance Program (KTAP) or identified as Kinship Care *and* be between the ages of 6 and 18, or <br/> 3) Attend a school participating in the National School Lunch Program or School Breakfast Program *and* have a household income that meets the requirements for Summer EBT. <br/>  <br/> To fill out the application online, go to either <a href=\"https://kysebt.ky.gov/\">https://kysebt.ky.gov/</a> or <a href=\"https://kynect.ky.gov/benefits/\">https://kynect.ky.gov/benefits/</a>."];
 
     // create answer_values objects - array of arrays of values mapped to each answer option for each question; used to facilitate mapping user input
-    const answer_values = [[1, 1, 0, 0], [1, 0, 0], [1, 0], [1, 2, 0, 0], [1, 0, 0], [], [1, 0, 2]];
+    const answer_values = [[1, 2, 1, 0, 0, 0], [1, 0, 0], [1, 0], [1, 2, 0, 0], [1, 0, 0], [], [1, 0, 2]];
 
     // create answer_types object - define input type for answers
     const answer_types = ["checkbox", "checkbox", "radio", "radio", "radio", "text", "radio"];
