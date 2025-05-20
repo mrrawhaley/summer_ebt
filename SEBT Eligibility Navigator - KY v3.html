@@ -464,19 +464,19 @@
                             selected_responses = document.querySelectorAll('input[name=' + code + ']:checked');
                             switch(code) {
                                 case "SCP":
-                                    SCP_responses = [];
-                                    Array.from(selected_responses.entries()).forEach((entry) => {
-                                        SCP_responses.push(entry[1].id);
-                                        console.log(entry[1].id);
-                                    });
-                                    if (SCP_responses.includes("SCP_3")) {
-                                        response_map.set("SCS", 1);
-                                        // let SCS_outcome_text = outcome_messages[outcome_codes.indexOf("mSCS")];
-                                        // let SCS_outcome_text_to_change = "{ statuses selected from question }";
-                                    } else {
-                                        response_map.set("SCS", 0);
-                                    };
-                                    console.log(response_map.toString());
+                                    // SCP_responses = [];
+                                    // Array.from(selected_responses.entries()).forEach((entry) => {
+                                    //     SCP_responses.push(entry[1].id);
+                                    //     console.log(entry[1].id);
+                                    // });
+                                    // if (SCP_responses.includes("SCP_3")) {
+                                    //     response_map.set("SCS", 1);
+                                    //     // let SCS_outcome_text = outcome_messages[outcome_codes.indexOf("mSCS")];
+                                    //     // let SCS_outcome_text_to_change = "{ statuses selected from question }";
+                                    // } else {
+                                    //     response_map.set("SCS", 0);
+                                    // };
+                                    // console.log(response_map.toString());
                                 case "SCS":
                                     // send selected item objects to temp list --> for each item object, send index to array --> use array to get program names and populate in mSCP
                                     let m_list_temp = [];
@@ -591,6 +591,7 @@
 
     function determine_eligibility() {
         let determination = "";
+        let response_count = response_map.size;
         let SCP = response_map.get("SCP");
         let SCS = response_map.get("SCS");
         let ACE = response_map.get("ACE");
@@ -601,46 +602,37 @@
         switch (true) {
             case (SCP == 1 && ACE == 1):
             case (SCP == 1 && ACE == 0 && SCH == 2):
-            case (SCP == 2 && ACE == 1 && SCS == 0 && INC == 1):
+            case (SCP == 2 && ACE == 1 && INC == 1):
                 determination = "mSCP";
                 break;
-            case (SCP == 0 && SCS == 1 && ACE == 1):
-            case (SCP == 2 && ACE == 1 && SCS == 1):
-            case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 2):
-                determination = "mSCS";
-                break;
-            case (SCP == 0 && SCS == 0 && SCH == 1 && FRP == 1):
-            case (SCP == 1 && ACE == 0 && SCH == 1 && FRP == 1):
-            case (SCP == 2 && ACE == 0 && SCH == 1 && FRP == 1):
-            case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && FRP == 1):
-            case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && FRP == 1):
+            // mSCS DETERMINATION REMOVED IN THIS VERSION
+            // case (SCP == 0 && SCS == 1 && ACE == 1):
+            // case (SCP == 2 && ACE == 1 && SCS == 1):
+            // case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 2):
+            //     determination = "mSCS";
+            //     break;
+            // case (SCP == 0 && SCH == 1 && FRP == 1):
+            // case (SCP == 1 && ACE == 0 && SCH == 1 && FRP == 1):
+            // case (SCP == 2 && ACE == 0 && SCH == 1 && FRP == 1):
+            // case (SCP == 2 && ACE == 1 && INC == 0 && SCH == 1 && FRP == 1):
+            case (FRP == 1):
                 determination = "mFRP";
                 break;
-            case (SCP == 0 && SCS == 0 && SCH == 2 && INC == 1):
-            case (SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
-            case (SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
-            case (SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
-            case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
-            case (SCP == 2 && ACE == 0 && SCH == 2 && INC == 1):
-            case (SCP == 2 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
+            case (response_count == 4 && SCP == 0 && SCH == 2 && INC == 1):
+            case (response_count == 5 && SCP == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
+            case (response_count == 5 && SCP == 2 && ACE == 0 && SCH == 2 && INC == 1):
+            case (response_count == 6 && (SCP == 1 || SCP == 2) && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
+            case (response_count == 6 && SCP == 2 && ACE == 1 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
                 determination = "mELI";
                 break;
             case (INC == 2):
                 determination = "mUNK";
                 break;
-            case (SCP == 0 && SCS == 0 && SCH == 0):
-            case (SCP == 1 && ACE == 0 && SCH == 0):
-            case (SCP == 2 && ACE == 0 && SCH == 0):
-            case (SCP == 0 && SCS == 0 && SCH == 2 && INC == 0):
-            case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 0):
-            case (SCP == 2 && ACE == 0 && SCH == 2 && INC == 0):
-            case (SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
-            case (SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
-            case (SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
-            case (SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 0):
-            case (SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 2):
-            case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
-            case (SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1 && (FRP == 0 || FRP == 2)):
+            case (SCH == 0):
+            case (SCP == 0 && SCH == 2 && INC == 0):
+            case (SCP == 2 && ACE == 1 && INC == 0 && (SCH == 0 || SCH == 2)):
+            case (SCP == 1 && ACE == 2 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
+            case (SCP == 2 && ACE == 1 && INC == 0 && SCH == 1 && (FRP == 0 || FRP == 2)):
                 determination = "mNOT";
                 break;
             default:
@@ -715,45 +707,32 @@
             //     next_question_code = "SCS"
             //     break;
             // when to ask ACE
-            case (response_count == 2 && SCP == 0 && SCS == 1):
-            case (response_count == 2 && SCP == 1 && (SCS == 0 || SCS == 1)):
-            case (response_count == 1 && SCP == 1):
-            case (response_count == 1 && SCP == 2):
+            case (response_count == 1 && (SCP == 1 || SCP == 2)):
                 next_question_code = "ACE";
                 break;
             // when to ask SCH
-            case (response_count == 2 && SCP == 0 && SCS == 0):
-            case (response_count == 3 && SCP == 0 && SCS == 1 && ACE == 0):
-            case (response_count == 2 && SCP == 1 && ACE == 0):
-            case (response_count == 2 && SCP == 2 && ACE == 0):
-            case (response_count == 4 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0): 
+            case (response_count == 1 && SCP == 0):
+            case (response_count == 2 && (SCP == 1 || SCP == 2) && ACE == 0):
+            case (response_count == 4 && SCP == 2 && ACE == 1 && INC == 0):
                 next_question_code = "SCH";
                 break;
             // when to ask FRP
-            case (response_count == 3 && SCP == 0 && SCS == 0 && SCH == 1):
-            case (response_count == 4 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1):
+            case (response_count == 2 && SCP == 0 && SCH == 1):
             case (response_count == 3 && SCP == 1 && ACE == 0 && SCH == 1):
+            case (response_count == 5 && SCP == 2 && ACE == 1 && INC == 0 && SCH == 1):
             case (response_count == 3 && SCP == 2 && ACE == 0 && SCH == 1):
-            case (response_count == 5 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1):
                 next_question_code = "FRP";
                 break;
             // when to ask INS
-            case (response_count == 3 && SCP == 2 && SCS == 0):
-            case (response_count == 3 && SCP == 0 && SCS == 0 && SCH == 2):
-            case (response_count == 4 && SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
-            case (response_count == 5 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
-            case (response_count == 4 && SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
-            case (response_count == 4 && SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2)):
-            case (response_count == 6 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+            case (response_count == 2 && SCP == 0 && SCH == 2):
+            case (response_count == 2 && SCP == 2 && ACE == 1):
+            case (response_count == 3 && SCP == 0 && SCH == 1 && (FRP == 0 || FRP == 2)):
             case (response_count == 3 && SCP == 2 && ACE == 0 && SCH == 2):
+            case (response_count == 4 && SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2)):
+            case (response_count == 4 && SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2)):
                 next_question_code = "INS";
                 break;
             // when to ask INC
-            case (response_count == 5 && SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
-            case (response_count == 6 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
-            case (response_count == 5 && SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
-            case (response_count == 5 && SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
-            case (response_count == 7 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
             case INS != undefined:
                 next_question_code = "INC";
                 break;
@@ -787,7 +766,7 @@
     const outcome_messages = ["Your child should automatically receive Summer EBT benefits because of their enrollment in the following program(s): { programs selected from question }. *You should not have to apply* for benefits for your child. <br/>  <br/> Benefits will be issued starting { date }. If you have an existing SNAP or KTAP card, then benefits will be loaded onto this card. If you do not have an existing SNAP or KTAP card, then benefits will be issued on a new EBT card that will be sent to you. If you had a SNAP or KTAP card in the past but do not have the card anymore or have lost the card, please call { phone number } to request a new card.", "Your child should automatically receive Summer EBT benefits because of their identification as the following: { statuses selected from question }. *You should not have to apply* for benefits for your child. <br/>  <br/> Benefits will be issued starting { date }. If you have an existing SNAP or KTAP card, then benefits will be loaded onto this card. If you do not have an existing SNAP or KTAP card, then benefits will be issued on a new EBT card that will be sent to you. If you had a SNAP or KTAP card in the past but do not have the card anymore or have lost the card, please call { phone number } to request a new card.", "Your child should automatically receive Summer EBT benefits because they were approved for free or reduced-price school meals. *You should not have to apply* for benefits for your child. <br/>  <br/> Benefits will be issued starting { date }. If you have an existing SNAP or KTAP card, then benefits will be loaded onto this card. If you do not have an existing SNAP or KTAP card, then benefits will be issued on a new EBT card that will be sent to you. If you had a SNAP or KTAP card in the past but do not have the card anymore or have lost the card, please call { phone number } to request a new card.", "You should apply for Summer EBT benefits for your child. Based on your household income, your child should be eligible for Summer EBT benefits. <br/>  <br/> To fill out the application online, go to either <a href=\"https://kysebt.ky.gov/\">https://kysebt.ky.gov/</a> or <a href=\"https://kynect.ky.gov/benefits/\">https://kynect.ky.gov/benefits/</a>.", "You may need to apply for Summer EBT benefits for your child. To be eligible, a child must meet one of the following requirements: <br/> 1) Be certified to receive free/reduced-price school meals *and* attend a school participating in the National School Lunch Program or School Breakfast Program, or <br/> 2) Be participating in Supplemental Nutrition Assistance Program (SNAP), Kentucky Transitional Assistance Program (KTAP) or identified as Kinship Care *and* be between the ages of 6 and 18, or <br/> 3) Attend a school participating in the National School Lunch Program or School Breakfast Program *and* have a household income that meets the requirements for Summer EBT. <br/>  <br/> To fill out the application online, go to either <a href=\"https://kysebt.ky.gov/\">https://kysebt.ky.gov/</a> or <a href=\"https://kynect.ky.gov/benefits/\">https://kynect.ky.gov/benefits/</a>.", "Your child might not be eligible for Summer EBT but you should apply if you think your child is eligible. To be eligible, a child must meet one of the following requirements: <br/> 1) Be certified to receive free/reduced-price school meals *and* attend a school participating in the National School Lunch Program or School Breakfast Program, or <br/> 2) Be participating in Supplemental Nutrition Assistance Program (SNAP), Kentucky Transitional Assistance Program (KTAP) or identified as Kinship Care *and* be between the ages of 6 and 18, or <br/> 3) Attend a school participating in the National School Lunch Program or School Breakfast Program *and* have a household income that meets the requirements for Summer EBT. <br/>  <br/> To fill out the application online, go to either <a href=\"https://kysebt.ky.gov/\">https://kysebt.ky.gov/</a> or <a href=\"https://kynect.ky.gov/benefits/\">https://kynect.ky.gov/benefits/</a>."];
 
     // create answer_values objects - array of arrays of values mapped to each answer option for each question; used to facilitate mapping user input
-    const answer_values = [[1, 2, 1, 0, 0, 0], [1, 0, 0], [1, 0], [1, 2, 0, 0], [1, 0, 0], [], [1, 0, 2]];
+    const answer_values = [[1, 2, 1, 1, 0, 0], [1, 0, 0], [1, 0], [1, 2, 0, 0], [1, 0, 0], [], [1, 0, 2]];
 
     // create answer_types object - define input type for answers
     const answer_types = ["checkbox", "checkbox", "radio", "radio", "radio", "text", "radio"];
@@ -852,7 +831,6 @@
 {"district": "Berea Board of Education", "school": "Berea Community Elementary/Middle/High", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Boone County Board of Education", "school": "AM Yealey Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Boone County Board of Education", "school": "Boone County High School", "nslp": 1, "cep": 1, "value": 2},
-{"district": "Boone County Board of Education", "school": "Boone County High School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Boone County Board of Education", "school": "Burlington Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Boone County Board of Education", "school": "Camp Ernst Middle School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Boone County Board of Education", "school": "Charles H Kelly Elementary School", "nslp": 1, "cep": 1, "value": 2},
@@ -860,7 +838,6 @@
 {"district": "Boone County Board of Education", "school": "Florence Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Boone County Board of Education", "school": "Hillard Collins Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Boone County Board of Education", "school": "Ockerman Elementary School", "nslp": 1, "cep": 1, "value": 2},
-{"district": "Boone County Board of Education", "school": "Ockerman Middle School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Boone County Board of Education", "school": "Ockerman Middle School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Boone County Board of Education", "school": "Rector A Jones Middle School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Boone County Board of Education", "school": "Steeplechase Elementary", "nslp": 1, "cep": 1, "value": 2},
@@ -981,7 +958,6 @@
 {"district": "Christian County Board of Education", "school": "Indian Hills Elementary", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Christian County Board of Education", "school": "Martin Luther King Jr Early Learning Center", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Christian County Board of Education", "school": "Millbrooke Elementary School", "nslp": 1, "cep": 1, "value": 2},
-{"district": "Christian County Board of Education", "school": "Pembroke Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Christian County Board of Education", "school": "Pembroke Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Christian County Board of Education", "school": "Sinking Fork Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Christian County Board of Education", "school": "South Christian Elementary School", "nslp": 1, "cep": 1, "value": 2},
@@ -1324,7 +1300,6 @@
 {"district": "Jefferson County Board of Education", "school": "Audubon Traditional Elem", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Jefferson County Board of Education", "school": "Ballard High", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Jefferson County Board of Education", "school": "Barret Traditional Middle", "nslp": 1, "cep": 1, "value": 2},
-{"district": "Jefferson County Board of Education", "school": "Barret Traditional Middle", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Jefferson County Board of Education", "school": "Bates Elementary", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Jefferson County Board of Education", "school": "Blake Elementary", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Jefferson County Board of Education", "school": "Bloom Elementary", "nslp": 1, "cep": 1, "value": 2},
@@ -1514,7 +1489,6 @@
 {"district": "Knox County Board of Education", "school": "Dewitt Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Knox County Board of Education", "school": "Flat Lick Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Knox County Board of Education", "school": "G R Hampton Elementary School", "nslp": 1, "cep": 1, "value": 2},
-{"district": "Knox County Board of Education", "school": "Girdler Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Knox County Board of Education", "school": "Girdler Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Knox County Board of Education", "school": "Jesse D Lay Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Knox County Board of Education", "school": "Knox Central High School", "nslp": 1, "cep": 1, "value": 2},
@@ -1802,7 +1776,6 @@
 {"district": "Pike County Board of Education", "school": "Valley Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Pikeville Independent School District", "school": "Pikeville Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Pikeville Independent School District", "school": "Pikeville High School", "nslp": 1, "cep": 1, "value": 2},
-{"district": "Pikeville Independent School District", "school": "Pikeville High School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Pineville Independent School District", "school": "Pineville Elementary/Middle/High school", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Powell County Board of Education", "school": "Bowen Elementary School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Powell County Board of Education", "school": "Clay City Elementary School", "nslp": 1, "cep": 1, "value": 2},
@@ -1959,146 +1932,146 @@
 {"district": "Wolfe County Board of Education", "school": "Wolfe County High School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Wolfe County Board of Education", "school": "Wolfe County Middle School", "nslp": 1, "cep": 1, "value": 2},
 {"district": "Beechwood Independent School District", "school": "Beechwood High School", "nslp": 0, "cep": 0, "value": 0},
-{"district": "Beechwood Independent School District", "school": "Beechwood Elementary  School", "nslp": 0, "cep": 0, "value": 0},
+{"district": "Beechwood Independent School District", "school": "Beechwood Elementary School", "nslp": 0, "cep": 0, "value": 0},
 {"district": "Beechwood Independent School District", "school": "Guardian Angel", "nslp": 0, "cep": 0, "value": 0},
 {"district": "Fort Thomas Independent School District", "school": "Highlands High School", "nslp": 0, "cep": 0, "value": 0},
 {"district": "Fort Thomas Independent School District", "school": "Highlands Middle School", "nslp": 0, "cep": 0, "value": 0},
-{"district": "Fort Thomas Independent School District", "school": "Johnson Elementary  School  (Fort Thomas Independent)", "nslp": 0, "cep": 0, "value": 0},
+{"district": "Fort Thomas Independent School District", "school": "Johnson Elementary School (Fort Thomas Independent)", "nslp": 0, "cep": 0, "value": 0},
 {"district": "Fort Thomas Independent School District", "school": "Moyer Elementary School", "nslp": 0, "cep": 0, "value": 0},
 {"district": "Fort Thomas Independent School District", "school": "Woodfill Elementary School", "nslp": 0, "cep": 0, "value": 0},
-{"district": "Anchorage Board of Education", "school": "Anchorage Independent Public School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "Ballyshannon Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "Conner High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "Conner Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "Erpenbeck Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "Gray Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "Ignite Institute", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "Larry A Ryle High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "Longbranch Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "New Haven Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "North Pointe Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "Randall K Cooper High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "Shirley Mann Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Boone County Board of Education", "school": "Thornwilde Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Bullitt County Board of Education", "school": "Bullitt Alternative Center", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Bullitt County Board of Education", "school": "Bullitt Central High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Bullitt County Board of Education", "school": "Bullitt East High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Bullitt County Board of Education", "school": "Eastside Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Bullitt County Board of Education", "school": "Hebron Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Bullitt County Board of Education", "school": "Mt Washington Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Bullitt County Board of Education", "school": "Mt Washington Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Bullitt County Board of Education", "school": "North Bullitt High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Bullitt County Board of Education", "school": "Old Mill Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Bullitt County Board of Education", "school": "Pleasant Grove Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Campbell County Board of Education", "school": "Campbell County High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Campbell County Board of Education", "school": "Grant's Lick Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Campbell County Board of Education", "school": "John W Reiley Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd Of Lexington", "school": "Good Shepherd Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd Of Lexington", "school": "Holy Family Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd Of Lexington", "school": "Mary Queen Of Holy Rosary Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd Of Lexington", "school": "Seton", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd Of Lexington", "school": "St Agatha Academy Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd Of Lexington", "school": "St John Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd Of Lexington", "school": "St Leo Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd Of Lexington", "school": "St Mark Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd Of Lexington", "school": "Sts Peter and Paul Regional School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "Bishop Brossart High", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "Blessed Sacrament Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "Covington Catholic High", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "Covington Latin High", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "Immaculate Heart Of Mary Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "Mary Queen Of Heaven Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "Newport Central Catholic HS", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Agnes Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Catherine Of Siena Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Cecilia Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Edward Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Henry Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Henry High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Joseph Elem-Crescent Spring", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Joseph Elementary-Cold Spring", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Mary Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Patrick's School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Paul Elementary-Florence", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Peter and Paul Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Philip Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Pius X Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Therese Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St Thomas Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Catholic School Bd. Of Covington", "school": "St. Timothy Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Daviess County Board of Education", "school": "Apollo High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Daviess County Board of Education", "school": "Daviess County High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Holy Name Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "John Paul II Catholic School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Mary Carrico Memorial Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Owensboro Catholic Elementary 4-6", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Owensboro Catholic Elementary K-3", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Owensboro Catholic High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Owensboro Catholic Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "St Joseph Interparochial School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "St Mary Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "St Mary Middle & High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "St Romuald Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Sts Peter and Paul School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Trinity High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fayette County Board of Education", "school": "Athens-Chilesburg Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fayette County Board of Education", "school": "Cassidy Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fayette County Board of Education", "school": "Clays Mill Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fayette County Board of Education", "school": "Garrett Morgan Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fayette County Board of Education", "school": "Maxwell Spanish Immersion Elem School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fayette County Board of Education", "school": "Rosa Parks Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fayette County Board of Education", "school": "Scapa At Bluegrass", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fayette County Board of Education", "school": "Stonewall Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fayette County Board of Education", "school": "Veterans Park Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fort Campbell Community Schools", "school": "Andre Lucas Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fort Campbell Community Schools", "school": "Barkley Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fort Campbell Community Schools", "school": "Barsanti Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fort Campbell Community Schools", "school": "Ft Campbell High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fort Campbell Community Schools", "school": "Mahaffey Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fort Campbell Community Schools", "school": "Marshall Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fort Knox Community Schools Food Service", "school": "Ft Knox High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fort Knox Community Schools Food Service", "school": "Kingsolver Elementary", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fort Knox Community Schools Food Service", "school": "Scott Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Fort Knox Community Schools Food Service", "school": "Van Voorhis Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Notre Dame Academy", "school": "Notre Dame Academy", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "Buckner Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "Camden Station Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "East Oldham Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "Goshen At Hillcrest Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "Harmony Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "Kenwood Station Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "Locust Grove Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "North Oldham High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "North Oldham Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "Oldham County HS/Buckner Alternative HS", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "South Oldham High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Oldham County Board of Education", "school": "South Oldham Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Russell Independent School District", "school": "Russell High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Russell Independent School District", "school": "Russell Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Russell Independent School District", "school": "Russell Primary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Russell Independent School District", "school": "Russell-McDowell Intermediate School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Scott County Board of Education", "school": "Eastern Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Scott County Board of Education", "school": "Northern Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Scott County Board of Education", "school": "Scott County High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Scott County Board of Education", "school": "Scott County Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Scott County Board of Education", "school": "Stamping Ground Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Scott County Board of Education", "school": "Western Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Spencer County Board of Education", "school": "Spencer County Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Spencer County Board of Education", "school": "Spencer County High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Spencer County Board of Education", "school": "Spencer County Middle School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Spencer County Board of Education", "school": "Taylorsville Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "St. Nicholas Academy", "school": "St. Nicholas Academy", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Walton-Verona Independent School District", "school": "Early Childhood Development Center", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Walton-Verona Independent School District", "school": "Walton-Verona Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Walton-Verona Independent School District", "school": "Walton-Verona Intermediate School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Walton-Verona Independent School District", "school": "Walton-Verona MS/HS", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Woodford County Board of Education", "school": "Huntertown Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Woodford County Board of Education", "school": "Northside Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Woodford County Board of Education", "school": "Safe Harbor Academy", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Woodford County Board of Education", "school": "Simmons Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Woodford County Board of Education", "school": "Southside Elementary School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Woodford County Board of Education", "school": "Woodford County High School", "nslp": 1, "cep": 0, "value": 0},
-{"district": "Woodford County Board of Education", "school": "Woodford County Middle School", "nslp": 1, "cep": 0, "value": 0}];
+{"district": "Anchorage Board of Education", "school": "Anchorage Independent Public School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "Ballyshannon Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "Conner High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "Conner Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "Erpenbeck Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "Gray Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "Ignite Institute", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "Larry A Ryle High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "Longbranch Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "New Haven Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "North Pointe Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "Randall K Cooper High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "Shirley Mann Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Boone County Board of Education", "school": "Thornwilde Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Bullitt County Board of Education", "school": "Bullitt Alternative Center", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Bullitt County Board of Education", "school": "Bullitt Central High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Bullitt County Board of Education", "school": "Bullitt East High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Bullitt County Board of Education", "school": "Eastside Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Bullitt County Board of Education", "school": "Hebron Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Bullitt County Board of Education", "school": "Mt Washington Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Bullitt County Board of Education", "school": "Mt Washington Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Bullitt County Board of Education", "school": "North Bullitt High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Bullitt County Board of Education", "school": "Old Mill Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Bullitt County Board of Education", "school": "Pleasant Grove Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Campbell County Board of Education", "school": "Campbell County High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Campbell County Board of Education", "school": "Grant's Lick Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Campbell County Board of Education", "school": "John W Reiley Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd Of Lexington", "school": "Good Shepherd Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd Of Lexington", "school": "Holy Family Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd Of Lexington", "school": "Mary Queen Of Holy Rosary Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd Of Lexington", "school": "Seton", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd Of Lexington", "school": "St Agatha Academy Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd Of Lexington", "school": "St John Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd Of Lexington", "school": "St Leo Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd Of Lexington", "school": "St Mark Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd Of Lexington", "school": "Sts Peter and Paul Regional School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "Bishop Brossart High", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "Blessed Sacrament Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "Covington Catholic High", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "Covington Latin High", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "Immaculate Heart Of Mary Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "Mary Queen Of Heaven Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "Newport Central Catholic HS", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Agnes Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Catherine Of Siena Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Cecilia Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Edward Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Henry Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Henry High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Joseph Elem-Crescent Spring", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Joseph Elementary-Cold Spring", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Mary Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Patrick's School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Paul Elementary-Florence", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Peter and Paul Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Philip Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Pius X Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Therese Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St Thomas Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Catholic School Bd. Of Covington", "school": "St. Timothy Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Daviess County Board of Education", "school": "Apollo High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Daviess County Board of Education", "school": "Daviess County High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Holy Name Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "John Paul II Catholic School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Mary Carrico Memorial Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Owensboro Catholic Elementary 4-6", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Owensboro Catholic Elementary K-3", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Owensboro Catholic High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Owensboro Catholic Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "St Joseph Interparochial School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "St Mary Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "St Mary Middle & High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "St Romuald Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Sts Peter and Paul School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Diocese of Owensboro Division of School & Comm Nutrition", "school": "Trinity High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fayette County Board of Education", "school": "Athens-Chilesburg Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fayette County Board of Education", "school": "Cassidy Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fayette County Board of Education", "school": "Clays Mill Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fayette County Board of Education", "school": "Garrett Morgan Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fayette County Board of Education", "school": "Maxwell Spanish Immersion Elem School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fayette County Board of Education", "school": "Rosa Parks Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fayette County Board of Education", "school": "Scapa At Bluegrass", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fayette County Board of Education", "school": "Stonewall Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fayette County Board of Education", "school": "Veterans Park Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fort Campbell Community Schools", "school": "Andre Lucas Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fort Campbell Community Schools", "school": "Barkley Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fort Campbell Community Schools", "school": "Barsanti Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fort Campbell Community Schools", "school": "Ft Campbell High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fort Campbell Community Schools", "school": "Mahaffey Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fort Campbell Community Schools", "school": "Marshall Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fort Knox Community Schools Food Service", "school": "Ft Knox High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fort Knox Community Schools Food Service", "school": "Kingsolver Elementary", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fort Knox Community Schools Food Service", "school": "Scott Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Fort Knox Community Schools Food Service", "school": "Van Voorhis Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Notre Dame Academy", "school": "Notre Dame Academy", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "Buckner Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "Camden Station Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "East Oldham Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "Goshen At Hillcrest Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "Harmony Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "Kenwood Station Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "Locust Grove Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "North Oldham High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "North Oldham Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "Oldham County HS/Buckner Alternative HS", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "South Oldham High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Oldham County Board of Education", "school": "South Oldham Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Russell Independent School District", "school": "Russell High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Russell Independent School District", "school": "Russell Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Russell Independent School District", "school": "Russell Primary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Russell Independent School District", "school": "Russell-McDowell Intermediate School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Scott County Board of Education", "school": "Eastern Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Scott County Board of Education", "school": "Northern Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Scott County Board of Education", "school": "Scott County High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Scott County Board of Education", "school": "Scott County Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Scott County Board of Education", "school": "Stamping Ground Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Scott County Board of Education", "school": "Western Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Spencer County Board of Education", "school": "Spencer County Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Spencer County Board of Education", "school": "Spencer County High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Spencer County Board of Education", "school": "Spencer County Middle School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Spencer County Board of Education", "school": "Taylorsville Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "St. Nicholas Academy", "school": "St. Nicholas Academy", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Walton-Verona Independent School District", "school": "Early Childhood Development Center", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Walton-Verona Independent School District", "school": "Walton-Verona Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Walton-Verona Independent School District", "school": "Walton-Verona Intermediate School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Walton-Verona Independent School District", "school": "Walton-Verona MS/HS", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Woodford County Board of Education", "school": "Huntertown Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Woodford County Board of Education", "school": "Northside Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Woodford County Board of Education", "school": "Safe Harbor Academy", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Woodford County Board of Education", "school": "Simmons Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Woodford County Board of Education", "school": "Southside Elementary School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Woodford County Board of Education", "school": "Woodford County High School", "nslp": 1, "cep": 0, "value": 1},
+{"district": "Woodford County Board of Education", "school": "Woodford County Middle School", "nslp": 1, "cep": 0, "value": 1}];
 
     // create income_guidelines object - look up income guidelines by household size
     const income_guidelines = [{"year": "2025-2026", "household_size": 1, "income_frequency": "annual", "amount": 28953},
