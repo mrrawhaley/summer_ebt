@@ -1,0 +1,60 @@
+<html>
+
+    <head>
+		<meta name="viewport" content="width=device-width,  initial-scale=1.0" />
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="../css/other.css"/>
+        <link rel="stylesheet" type="text/css" href="../css/question_navigator.css"/>
+        <link rel="stylesheet" type="text/css" href="../css/school_input.css"/>
+        <link rel="stylesheet" type="text/css" href="../css/navigation.css"/>
+    </head>
+
+    <body>
+        <div class="container">
+            <div id="introduction">
+                <h1>
+                    Learn your next steps for receiving $120 for groceries this summer
+                </h1>
+                <p>
+                    The { name of navigator } will ask you a few questions about your child to help you understand if you will receive $120 automatically or if you will need to apply.
+                </p>
+                <h2>
+                    Before you get started on this form
+                </h2>
+                <p>
+                    It will take most people less than two minutes to complete this form. You will not need to provide any sensitive information about your child, but you may be asked if your child:
+                    <ul>
+                        <li>Is enrolled in programs like SNAP</li>
+                        <li>Has been approved for free or reduced-price school meals</li>
+                        <li>Has a household income that is eligible to receive Summer EBT</li>
+                    </ul>
+                </p>
+                <p>
+                    This form does <em>not</em> save your answers, and your answers will not be shared with anyone.
+                </p>
+                <h2>
+                    How to complete this form
+                </h2>
+                <p>
+                    For each question, tap/click the radio button (<input type="radio" />) or checkboxes (<input type="checkbox" />) that best describe your child, and then tap/click the "next question" button. If you need to change your answer to a previous question, tap/click the "go back" button.
+                </p>
+                <h3>
+                    Tap or click the "next question" button to get started!
+                </h3>
+            </div>
+            <div id="question_navigator"></div>
+            <div id="eligibility_determination" class="eligibility"></div>
+            <div id="navigation_buttons" class="navigation">
+                <input type="button" id="back_button" value="go back" onclick="previous_question()" class="navigation_button" />
+                <input type="button" id="next_button" value="next question" class="navigation_button"/>
+            </div>
+        </div>
+    </body>
+
+</html>
+
+<script src="../js/model.js"></script>
+<script src="../js/controller.js"></script>

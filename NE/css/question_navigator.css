@@ -1,0 +1,25 @@
+#question_navigator {
+    height: 100dvh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+#question_navigator > .response_collector {
+    height: 100dvh;
+    /* flex: 1; */
+    padding: 0.1em 0.1em 0.1em 0.1em;
+    scroll-snap-align: end;
+    scroll-snap-stop: always;
+}
+
+#question_navigator::-webkit-scrollbar {
+    display: none;
+}
+
+.question_text {
+    font-weight: bold;
+    font-size: 1.1em;
+}
