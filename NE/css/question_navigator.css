@@ -8,8 +8,9 @@
 }
 
 #question_navigator > .response_collector {
-    height: 90dvh;
+    height: 100dvh;
     /* flex: 1; */
+    margin-top: 10dvh;
     padding: 0.1em 0.1em 0.1em 0.1em;
     scroll-snap-align: end;
     scroll-snap-stop: always;
