@@ -8,7 +8,7 @@
 }
 
 #question_navigator > .response_collector {
-    height: 100dvh;
+    height: 80dvh;
     /* flex: 1; */
     padding-top: 10dvh;
     padding-bottom: 0.1em;
