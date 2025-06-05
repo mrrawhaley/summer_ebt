@@ -1,12 +1,41 @@
 function display_question(code) {
-    // see if question is already displayed --> if yes, go to it; if not, display question
+    // hide previous question
+    let question_count = document.getElementById("question_navigator").childElementCount;
+    switch(question_count) {
+        case 0:
+            break;
+        default:
+            let last_question = document.getElementById("question_navigator").lastElementChild;
+            let last_question_code = last_question.id.slice(0, 3);
+            console.log(Array.from(response_map.keys()));
+            if (Array.from(response_map.keys()).includes(last_question_code)) {
+                console.log(Array.from(response_map.keys()).includes(last_question_code));
+                last_question.style.display = "none";
+            // } else {
+            //     last_question.scrollIntoView({behavior: "smooth", block: "start"});
+            };
+            // document.getElementById("question_navigator").lastElementChild.style.display = "none";
+            break;
+    };
 
+    // console.log(document.getElementById("question_navigator").childElementCount);
+    // if (document.getElementById("question_navigator").childElementCount > 0) {
+    //     let last_question = document.getElementById("question_navigator").lastElementChild;
+    //     let last_question_code = last_question.id.slice(0 ,3);
+    //     console.log(last_question_code);
+    //     if (last_question_code != "SCP") {
+    //         last_question.style.display = "none";
+    //     };
+    // };
+    
+    
+    // see if question is already displayed --> if yes, go to it; if not, display question
     let displayed_question_divs = Array.from(document.getElementsByTagName("div"));
     let displayed_question_div_ids = [];
     displayed_question_divs.forEach((question) => {
         displayed_question_div_ids.push(question.id);
     });
-    console.log(displayed_question_div_ids);
+    // console.log(displayed_question_div_ids);
 
     if (displayed_question_div_ids.includes(code + "_div")) {
         document.getElementById(code + "_div").scrollIntoView({behavior: "smooth", block: "start"});
@@ -237,7 +266,7 @@ function display_question(code) {
                                     m_programs_text_to_replace = "{ statuses selected from question }";
                                 };
                                 outcome_map.get("m" + code).outcome_text = current_outcome_text.replace(m_programs_text_to_replace, m_string);
-                                console.log(outcome_map.get("m" + code));
+                                // console.log(outcome_map.get("m" + code));
                                 selected_responses.forEach(response => {
                                     user_response.push(response.value);
                                 });
@@ -273,11 +302,12 @@ function display_question(code) {
     function previous_question() {
         let last_question = document.getElementById("question_navigator").lastElementChild;
         let last_question_code = last_question.id.slice(0 ,3);
-        console.log(last_question_code);
+        // console.log(last_question_code);
         let next_button_element = document.getElementById("next_button");
         if (eligibility_determined == true) {
             response_map.delete(last_question_code);
-            console.log(Array.from(response_map));
+            // console.log(Array.from(response_map));
+            document.getElementById("question_navigator").lastElementChild.style.display = "block";
             document.getElementById("question_navigator").lastElementChild.scrollIntoView({behavior: "smooth", block: "start"});
             document.getElementById("eligibility_determination").innerHTML = "";
             next_button_element.removeEventListener("click", reset_navigator);
@@ -296,6 +326,7 @@ function display_question(code) {
             last_question.remove();
             };
         };
+        document.getElementById("question_navigator").lastElementChild.style.display = "block";
         document.getElementById("question_navigator").lastElementChild.scrollIntoView({behavior: "smooth", block: "start"});
     };
 
@@ -326,7 +357,7 @@ function response_recode(code) {
             response_map.set(code, Number(user_response[0]));
             break;
     };
-    console.log(response_map);
+    // console.log(response_map);
 };
 
 function determine_eligibility() {
@@ -388,10 +419,14 @@ function determine_eligibility() {
     };
     let next_button_element = document.getElementById("next_button");
     if (outcome_codes.includes(determination)) {
+        // hide last question
+        document.getElementById("question_navigator").lastElementChild.style.display = "none";
+        
+        // fill out eligibility determination element
         eligibility_determination_element = document.getElementById("eligibility_determination");
         eligibility_determination_element.className = "eligibility";
         eligibility_determination_element.innerHTML = outcome_map.get(determination).outcome_text;
-        eligibility_determination_element.scrollIntoView({behavior: "smooth", block: "end"});
+        eligibility_determination_element.scrollIntoView({behavior: "smooth", block: "start"});
         eligibility_determined = true;
         next_button_element.value = "start over";
         next_button_element.removeEventListener("click", determine_eligibility);
