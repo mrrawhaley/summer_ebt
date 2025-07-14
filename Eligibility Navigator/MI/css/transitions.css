@@ -1,0 +1,16 @@
+.fade {
+    display: block;
+    opacity: 1;
+    transition: all 0.5s ease;
+    transition-behavior: allow-discrete;
+}
+
+.fade-out {
+    display: none;
+    opacity: 0;
+}
+
+.fade-in {
+    display: block;
+    opacity: 1;
+}
