@@ -656,7 +656,6 @@ function determine_eligibility() {
             determination = "mNOT";
             break;
         default:
-            determination = "mUNK";
             break;
     };
     let next_button_element = document.getElementById("next_button");
