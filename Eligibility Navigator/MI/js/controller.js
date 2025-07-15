@@ -45,9 +45,15 @@ function loadLanguage(language) {
             case element.className == "navigation_button":
                 let button = element.getAttribute("data-i18n");
                 element.value = button_text[button][selected_language];
+                if (eligibility_determined == true && button == "next") {
+                    element.value = button_text["reset"][selected_language]
+                }
                 break;
             case element.id == "SCH_t":
                 element.placeholder = placeholder_text[selected_language];
+            case element_name == "school_input_warning":
+                element.innerHTML = school_input_warning_message[selected_language];
+                break;
             default:
                 break;
         };
@@ -184,13 +190,13 @@ function display_question(code, language) {
                         let frequency_translation = income_frequencies[frequency][lang];
                         user_income_guidelines_string_array.push(" " + dollar_amount + " " + frequency_translation);
                     });
-                    console.log("Current: " + user_income_guidelines_string_by_lang["current"][lang]);
+                    // console.log("Current: " + user_income_guidelines_string_by_lang["current"][lang]);
                     user_income_guidelines_string_by_lang["new"][lang] = user_income_guidelines_string_array.toString();
-                    console.log("New: " + user_income_guidelines_string_by_lang["new"][lang]);
+                    // console.log("New: " + user_income_guidelines_string_by_lang["new"][lang]);
                     questions["INC"].question_text[lang] = questions["INC"].question_text[lang].replace(user_income_guidelines_string_by_lang["current"][lang], user_income_guidelines_string_by_lang["new"][lang]);
-                    console.log(questions["INC"].question_text[lang]);
+                    // console.log(questions["INC"].question_text[lang]);
                     user_income_guidelines_string_by_lang["current"][lang] = user_income_guidelines_string_by_lang["new"][lang];
-                    console.log("Current (updated): " + user_income_guidelines_string_by_lang["current"][lang]);
+                    // console.log("Current (updated): " + user_income_guidelines_string_by_lang["current"][lang]);
                     // let frequency_translation = income_frequencies[frequency][lang];
                     // user_income_guidelines_string_array.push(" " + dollar_amount + " " + frequency_translation);
                 });
@@ -277,6 +283,7 @@ function display_question(code, language) {
                 let school_input_warning = Object.assign(document.createElement("div"), {
                     id: "school_input_warning_div"
                 });
+                school_input_warning.setAttribute("data-i18n", "school_input_warning");
 
                 let school_input_dropdown = Object.assign(document.createElement("div"), {
                     id: "school_input_dropdown_div"
@@ -354,10 +361,15 @@ function display_question(code, language) {
                 });
 
                 // help message if school_input text does not match a school
+                let school_input_warning_message = {
+                    en: "Please select a school from the list.",
+                    es: "Por favor seleccione una escuela de la lista."
+                };
+
                 school_input.addEventListener("blur", function () {
                     switch (true) {
                         case (!schools_list.includes(school_input.value)):
-                            school_input_warning.innerHTML = "Please select a school from the list.";
+                            school_input_warning.innerHTML = school_input_warning_message[selected_language];
                             school_input_warning.style.display = "block";
                             break;
                         case school_input.value == "":
@@ -453,13 +465,18 @@ function display_question(code, language) {
                                         // m_list.push(questions[code].answers[language][program_index]);
                                     });
                                     m_string = m_list.join(", ");
+                                    streamlined_cert_programs_selected[code]["new"][lang] = m_string;
+                                    // m_string = m_list.join(", ");
                                     let m_programs_text_to_replace = "";
-                                    if (code == "SCP") {
-                                        m_programs_text_to_replace = "{ programs selected from question }";
-                                    } else if (code == "SCS") {
-                                        m_programs_text_to_replace = "{ statuses selected from question }";
-                                    };
-                                    outcomes["m" + code][lang] = current_outcome_text.replace(m_programs_text_to_replace, m_string);
+                                    m_programs_text_to_replace = streamlined_cert_programs_selected[code]["current"][lang];
+                                    // m_programs_text_to_replace = "{ programs selected from question }";
+                                    // if (code == "SCP") {
+                                    //     m_programs_text_to_replace = "{ programs selected from question }";
+                                    // } else if (code == "SCS") {
+                                    //     m_programs_text_to_replace = "{ statuses selected from question }";
+                                    // };
+                                    outcomes["m" + code][lang] = current_outcome_text.replace(streamlined_cert_programs_selected[code]["current"][lang], streamlined_cert_programs_selected[code]["new"][lang]);
+                                    streamlined_cert_programs_selected[code]["current"][lang] = streamlined_cert_programs_selected[code]["new"][lang];
                                 });
                                 console.log(outcome_map.get("m" + code));
                                 selected_responses.forEach(response => {
