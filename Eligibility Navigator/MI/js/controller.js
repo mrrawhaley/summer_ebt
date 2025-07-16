@@ -24,6 +24,10 @@ function loadLanguage(language) {
         var element_code = element_name.slice(0, 3);
         var element_content_type = element_name.slice(4);
         switch (true) {
+            case (element_name == "language-selector_label"):
+                element.innerHTML = language_selector_label[selected_language]
+                element.style.color = "darkorange";
+                break;
             case (element.parentNode.id == "introduction"):
                 var intro_element = element.getAttribute("data-i18n");
                 element.innerHTML = intro[selected_language][intro_element];
@@ -826,4 +830,4 @@ function next_question(code) {
 
 // initialize navigator
 display_question("SCP");
-document.getElementById("introduction").scrollIntoView({behavior: "instant", block: "start"});
+window.scrollTo(0, 0);

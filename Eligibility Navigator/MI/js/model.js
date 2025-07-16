@@ -1,6 +1,12 @@
 // create languages variable - list of languages available for translation
 let languages = ["en", "es"]
 
+// create language_selector_label variable - label to prompt user to change language
+let language_selector_label = {
+    en: "Cambia idioma:",
+    es: "Change language:"
+};
+
 // create question variable - JSON object with question text, answers, answer values, and answer types
 let questions = {
     SCP: {
@@ -264,7 +270,7 @@ var outcomes = {
     },
     mNOT: {
         en: "Your child might not be eligible for Summer EBT but you should apply if you think your child is eligible. To be eligible, a child must meet one of the following requirements: \n\n 1) Be certified to receive free/reduced-price school meals *and* attend a school participating in the National School Lunch Program or School Breakfast Program, or \n 2) Be participating in SNAP (FAP or food benefits), Medicaid (MA), TANF (FIP or cash assistance) or identified as Homeless, Foster, Migrant, Runaway *and* be between the ages of 6 and 18 or \n 3) Attend a school participating in the National School Lunch Program or School Breakfast Program *and* have a household income that meets the requirements for Summer EBT. \n\n To fill out the application online, go to <a href=\"https://www.michigan.gov/MIBridges\">https://www.michigan.gov/MIBridges</a>.",
-        es: "Es posible que su hijo no reúna los requisitos para recibir el 6, pero debe solicitarlo si cree que sí los reúne. Para ser elegible, el niño debe cumplir uno de los siguientes requisitos: \n\n 1) Estar certificado para recibir comidas escolares gratuitas o a precio reducido *y* asistir a una escuela que participe en el Programa Nacional de Almuerzos Escolares o en el Programa de Desayunos Escolares, o \n 2) Participar en SNAP (FAP o Asistencia Alimentaria), Medicaid (MA),  TANF (FIP o Asistencia en Efectivo) o estar identificado como un estudiante sin hogar, en hogar de acogida (foster care), o en familia de trabajadores agrícolas migrantes *y* tener entre 6 y 18 años, o \n 3) Asistir a una escuela que participe en el Programa Nacional de Almuerzos Escolares o el Programa de Desayunos Escolares *y* tener unos ingresos familiares que cumplan los requisitos para Summer EBT. \n\n Para rellenar la solicitud en línea, vaya a <a href=\"https://www.michigan.gov/MIBridges\">https://www.michigan.gov/MIBridges</a>. \n\n Aunque haya rellenado un formulario de beneficios educativos (“Education Benefits Form”) a través de la escuela de su hijo este año, debe solicitar Summer EBT para poder recibir las prestaciones."
+        es: "Es posible que su hijo no reúna los requisitos para recibir el 6, pero debe solicitarlo si cree que sí los reúne. Para ser elegible, el niño debe cumplir uno de los siguientes requisitos: \n\n 1) Estar certificado para recibir comidas escolares gratuitas o a precio reducido *y* asistir a una escuela que participe en el Programa Nacional de Almuerzos Escolares o en el Programa de Desayunos Escolares, o \n 2) Participar en SNAP (FAP o Asistencia Alimentaria), Medicaid (MA),  TANF (FIP o Asistencia en Efectivo) o estar identificado como un estudiante sin hogar, en hogar de acogida (foster care), o en familia de trabajadores agrícolas migrantes *y* tener entre 6 y 18 años, o \n 3) Asistir a una escuela que participe en el Programa Nacional de Almuerzos Escolares o el Programa de Desayunos Escolares *y* tener unos ingresos familiares que cumplan los requisitos para Summer EBT. \n\n Para rellenar la solicitud en línea, vaya a <a href=\"https://www.michigan.gov/MIBridges\">https://www.michigan.gov/MIBridges</a>. \n\n Aunque haya rellenado un formulario de beneficios educativos (“Education Benefits Form”) a través de la escuela de su hijo este año, debe solicitar Summer EBT para poder recibir las prestaciones." 
     }
 };
 
