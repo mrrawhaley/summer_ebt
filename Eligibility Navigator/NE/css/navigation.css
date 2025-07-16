@@ -1,0 +1,28 @@
+.navigation {
+	position: sticky;
+	bottom: 0;
+	background-color: #fff;
+	padding: 10px 20px;
+	border-top: 1px solid #ccc;
+	display: flex;
+	justify-content: space-between;
+}
+
+#back_button, #next_button {
+	/* position: fixed;
+	bottom: 5dvh;
+	width: 25dvw;
+	height: 10dvh; */
+	font-weight: bold;
+	color: white;
+}
+
+#back_button {
+	left: 5dvh;
+	background-color: dodgerblue;
+}
+
+#next_button {
+	right: 5dvh;
+	background-color: darkorange;
+}

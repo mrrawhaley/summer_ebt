@@ -1,0 +1,20 @@
+#question_navigator > .response_collector {
+    height: 100dvh;
+    /* flex: 1; */
+    padding: 0.1em 0.1em 0.1em 0.1em;
+    scroll-snap-align: end;
+    scroll-snap-stop: always;
+}
+
+#question_navigator::-webkit-scrollbar {
+    display: none;
+}
+
+#question_navigator::-webkit-scrollbar {
+    display: none;
+}
+
+.question_text {
+    font-weight: bold;
+    font-size: 1.1em;
+}

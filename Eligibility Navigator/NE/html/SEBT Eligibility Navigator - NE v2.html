@@ -1,0 +1,49 @@
+<html>
+
+    <head>
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../css/navigation.css">
+        <link rel="stylesheet" href="../css/other.css">
+        <link rel="stylesheet" href="../css/question_navigator.css">
+        <link rel="stylesheet" href="../css/school_input.css">
+        <link rel="stylesheet" href="../css/transitions.css">
+
+    </head>
+
+    <body>
+        <select id="language-selector">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+        </select>
+        <div class="container">
+            <div id="question_navigator">
+                <div id="introduction">
+                    <h1 data-i18n="cta"></h1>
+                    <p data-i18n="about"></p>
+                    
+                    <h2 data-i18n="level_set_header"></h2>
+                    <p data-i18n="level_set_body"></p>
+
+                    <!-- <h2 data-i18n="instructions_header"></h2>
+                    <p data-i18n="instructions_body"></p> -->
+
+                    <h2 data-i18n="get_started"></h2>
+                </div>
+            </div>
+            <div id="eligibility_determination" class="eligibility" data-i18n="determination"></div>
+            <div id="navigation_buttons" class="navigation">
+                <input type="button" data-i18n="back" id="back_button" onclick="previous_question()" class="navigation_button" />
+                <input type="button" data-i18n="next" id="next_button" class="navigation_button"/>
+            </div>
+        </div>
+    </body>
+
+    <script src="../js/model.js"></script>
+    <script src="../js/controller.js"></script>
+
+</html>

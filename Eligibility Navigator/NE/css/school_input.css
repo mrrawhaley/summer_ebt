@@ -1,0 +1,41 @@
+/* Container for the combo box */
+.school_input_container {
+    position: relative;
+    /* width: 250px; */
+}
+
+/*
+Input field 
+#combo-box {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+*/
+
+/* Dropdown list */
+#school_input_dropdown_div {
+    /* position: absolute; */
+    width: 75%;
+    border: 1px solid #ccc;
+    /* border-top: none; */
+    background: white;
+    max-height: 120px; /* Makes the list scrollable */
+    overflow-y: auto;
+    display: none;
+    z-index: 1000;
+}
+
+/* Dropdown items */
+#school_input_dropdown_div div {
+    padding: 8px;
+    cursor: pointer;
+}
+
+#school_input_dropdown_div div:hover {
+    background-color: #f0f0f0;
+}
+
+#school_input_warning_div, #school_input_dropdown_div {
+    display: none;
+}
