@@ -3,6 +3,10 @@
 	font-family: "Open Sans", Arial, Helvetica, sans-serif;
 }
 
+#language-selector {
+	background-color: darkorange;
+}
+
 #introduction {
 	height: 300dvh;
 	overflow-y: auto;
