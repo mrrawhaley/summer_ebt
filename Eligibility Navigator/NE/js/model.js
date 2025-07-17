@@ -48,7 +48,7 @@ let questions = {
     SCH: {
         question_text: {
             en: "Please select the school OR school district that your child attends. If you cannot find your child's school, look for your school district (for example, \"Omaha Public Schools\"). If your school or district isn't found on this list, they are not a school/district participating in the National School Lunch Program/School Breakfast Program, so unfortunately your child would not be eligible for this program.",
-            es: "¿A qué escuela o distrito escolar asiste su hijo?"
+            es: "Por favor seleccione la escuela O el distrito escolar al que asiste su hijo/a. Si no encuentra la escuela de su hijo/a, busque su distrito escolar, por ejemplo, \"Omaha Public Schools\". Si su escuela o distrito no aparece en la lista, no participa en el Programa Nacional de Almuerzos Escolares/Programa de Desayunos Escolares, por lo que, lamentablemente, su hijo/a no sería elegible para este programa."
         },
         answers: {
             en: ["My child does not attend any of these schools", "My child is home schooled"],
@@ -1115,7 +1115,7 @@ var intro = {
         "level_set_header": "Antes de empezar a rellenar el formulario",
         "level_set_body": "<p>A la mayoría de las personas les llevará menos de dos minutos rellenar este formulario. No tendrá que facilitar ninguna información confidencial sobre su hijo, pero es posible que se le pregunte si su hijo:</p> <ul> <li>Está inscrito en programas como SNAP</li> <li>Ha sido aprobado para recibir comidas escolares gratuitas o a precio reducido</li> <li>Tiene unos ingresos familiares que le permiten recibir Summer EBT</li> </ul>",
         "instructions_header": "Cómo utilizar esta herramienta",
-        "instructions_body": "Para cada pregunta, pulse o haga clic en el botón o las casillas que mejor describan a su hijo/a y luego toque o haga clic en el botón \"Siguiente pregunta\". Si necesita cambiar la respuesta de una pregunta anterior, toque o haga clic en el botón \"Atrás\".",
+        "instructions_body": "Para cada pregunta, pulse o haga clic en el botón ( <input type=\"radio\" /> ) o las casillas ( <input type=\"checkbox\" /> ) que mejor describan a su hijo/a y luego toque o haga clic en el botón \"Siguiente pregunta\". Si necesita cambiar la respuesta de una pregunta anterior, toque o haga clic en el botón \"Atrás\".",
         "get_started": "Pulse o haga clic en el botón “Siguiente pregunta” para empezar."
     } 
 };
