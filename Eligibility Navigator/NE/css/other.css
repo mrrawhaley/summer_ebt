@@ -8,15 +8,24 @@
 }
 
 #introduction {
-	height: 300dvh;
+	/* height: 300dvh;
 	overflow-y: auto;
-	padding: 0.1em 0.1em 0.1em 0.1em;
+	padding: 0.1em 0.1em 0.1em 0.1em; */
+	padding-top: 10dvh;
+    padding-bottom: 0.1em;
+    padding-left: 0.1em;
+    padding-right: 0.1em;
 	scroll-snap-align: start;
 	scroll-snap-stop: always;
 }
 
 .eligibility {
-	height: 100dvh;
+	height: 90dvh;
+	/* height: 100dvh; */
 	font-weight: bold;
-	padding: 0.1em 0.1em 0.1em 0.1em;
+	/* padding: 0.1em 0.1em 0.1em 0.1em; */
+	padding-top: 10dvh;
+    padding-bottom: 0.1em;
+    padding-left: 0.1em;
+    padding-right: 0.1em;
 }
