@@ -23,6 +23,7 @@ function loadLanguage(language) {
         var element_name = element.getAttribute("data-i18n");
         var element_code = element_name.slice(0, 3);
         var element_content_type = element_name.slice(4);
+        console.log(element_name);
         switch (true) {
             case (element_name == "language-selector_label"):
                 element.innerHTML = language_selector_label[selected_language]
@@ -363,13 +364,6 @@ function display_question(code, language) {
                         school_input_dropdown.style.display = "none";
                     }
                 });
-
-                // help message if school_input text does not match a school
-                let school_input_warning_message = {
-                    en: "Please select a school from the list.",
-                    es: "Por favor seleccione una escuela de la lista."
-                };
-
                 school_input.addEventListener("blur", function () {
                     switch (true) {
                         case (!schools_list.includes(school_input.value)):

@@ -7,6 +7,12 @@ let language_selector_label = {
     es: "Change language:"
 };
 
+// create school_input_warning variable - _messagehelp message if school_input text does not match a school
+let school_input_warning_message = {
+    en: "Please select a school from the list.",
+    es: "Por favor seleccione una escuela de la lista."
+};
+
 // create question variable - JSON object with question text, answers, answer values, and answer types
 let questions = {
     SCP: {

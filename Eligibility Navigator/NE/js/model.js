@@ -122,6 +122,12 @@ let income_frequencies = {
     }
 }
 
+// create school_input_warning_message variable - help message if school_input text does not match a school
+let school_input_warning_message = {
+    en: "Please select a school from the list.",
+    es: "Por favor seleccione una escuela de la lista."
+};
+
 // create response_map variable - map of user responses to each question
 let response_map = new Map();
 

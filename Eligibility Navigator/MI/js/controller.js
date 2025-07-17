@@ -364,12 +364,6 @@ function display_question(code, language) {
                     }
                 });
 
-                // help message if school_input text does not match a school
-                let school_input_warning_message = {
-                    en: "Please select a school from the list.",
-                    es: "Por favor seleccione una escuela de la lista."
-                };
-
                 school_input.addEventListener("blur", function () {
                     switch (true) {
                         case (!schools_list.includes(school_input.value)):
