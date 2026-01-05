@@ -1,0 +1,1918 @@
+<!DOCTYPE html>
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<head>
+    <title>NKH Eligibility Navigator</title>
+    <link href="https://cdn.jsdelivr.net/npm/@uswds/uswds@3.13.0/dist/css/uswds.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@uswds/uswds@3.13.0/dist/js/uswds.min.js"></script>
+</head>
+
+<body style="padding: 1rem;">
+    <header id="section_header" name="section_header" class="usa-header usa-header--basic" style="font-size: 1.5rem; font-weight: bold">
+        Summer EBT Eligibility Navigator
+    </header>
+
+    <section id="section_content" name="section_content" class="usa-prose" style="max-width: 30rem;">
+        <!-- SECTION CONTENT -->
+    </section>
+
+    <section id="navigation_area" name="navigation_area" class="usa-footer usa-footer--slim" style="padding-top:2rem; max-width: 30rem; display: flex; flex-direction: row">
+        <!-- NAVIGATION BUTTONS -->
+        <button class="usa-button" type="button" id="back_button" style="flex: 1">Back</button>
+        <span style="flex: 1"></span>
+        <button class="usa-button" type="button" id="next_button" style="flex: 1">Next</button>
+    </section>
+</body>
+
+<script type="text/javascript">
+
+// MODEL
+// // get current and previous question codes
+var current_question_code;
+// var previous_question_code;
+
+// store school ID
+var school_navigator_id = null;
+
+// store eligibility determination; intialize to false
+var eligibility_determination = null;
+
+// // create response dictionary
+var user_responses = {};
+var user_response_values = {};
+
+var get_user_responses = function(event) {
+    var question_code = event.target.name;
+    var questions_answered = Object.keys(user_responses);
+    if (questions_answered.includes(question_code)) {
+        delete user_responses[question_code];
+        delete user_response_values[question_code];
+    };
+    switch(question_code) {
+        case "INS":
+            // append "questions_answered" array
+            // get household size
+            var household_size = document.getElementById(question_code).value;
+            user_responses[question_code] = household_size;
+            user_response_values[question_code] = household_size;
+            // write income question
+            var household_income_question_stem = "Is your household income no more than ";
+            var household_income_guidelines = [];
+            income_guidelines.forEach((guideline) => {
+                if ((guideline.household_size == household_size) && (guideline.fpl == 185) && (guideline.place == "(not AK or HI)")) {
+                    household_income_guidelines.push(guideline);
+                };
+            });
+            var annual_guideline_string, monthly_guideline_string, bimonthly_guideline_string, biweekly_guideline_string, weekly_guideline_string;
+            var to_dollars = function(dollar_amount) {
+                return dollar_amount.toLocaleString('en-US', {style: 'currency', currency: 'USD'})
+            };
+            household_income_guidelines.forEach((guideline) => {
+                switch (guideline.income_frequency) {
+                    case "annually":
+                        annual_guideline_string = to_dollars(guideline.amount) + " annually";
+                        break;
+                    case "monthly":
+                        monthly_guideline_string = to_dollars(guideline.amount) + " monthly";
+                        break;
+                    case "twice per month":
+                        bimonthly_guideline_string = to_dollars(guideline.amount) + " twice per month";
+                        break;
+                    case "every two weeks":
+                        biweekly_guideline_string = to_dollars(guideline.amount) + " every two weeks";
+                        break;
+                    case "weekly":
+                        weekly_guideline_string = to_dollars(guideline.amount) + " weekly";
+                        break;
+                };
+            });
+            var household_income_guidelines_string = annual_guideline_string + ", " + monthly_guideline_string + ", " + bimonthly_guideline_string + ", " + biweekly_guideline_string + ", or " + weekly_guideline_string + "?";
+            question_bank["INC"].question_text = household_income_question_stem + household_income_guidelines_string;
+            break;
+        case "SCH":
+            // get school combo box value
+            var school_combo_box = document.getElementById("SCH");
+            var school_combo_box_code = school_combo_box.value;
+            school_navigator_id = school_combo_box.id;
+            console.log("school navigator ID: " + school_navigator_id);
+            var school_combo_box_status_codes = ["nslp", "cep", "not_nslp"];
+            // get non-school response options
+            var non_school_response_options = document.querySelectorAll('input[name=' + question_code + ']');
+            var non_school_response = [];
+            non_school_response_options.forEach((option) => {
+                if (option.checked == true) {
+                    non_school_response.push(option.id);
+                };
+            });
+            switch (event.type) {
+                case "change":
+                    user_responses["SCH"] = school_combo_box_code;
+                    switch (school_combo_box_code) {
+                        case "nslp":
+                            user_response_values["SCH"] = 1;
+                            break;
+                        case "cep":
+                            user_response_values["SCH"] = 2;
+                            break;
+                        case "not_nslp":
+                            user_response_values["SCH"] = 0;
+                            break;
+
+                    }
+                    non_school_response_options.forEach((option) => {
+                        option.checked = false;
+                        option.disabled = false;
+                    });
+                    break;
+                case "click":
+                    var selected_non_school_response = event.target.id;
+                    var selected_non_school_response_value = event.target.value;
+                    school_combo_box.value = "";
+                    delete user_responses["SCH"];
+                    user_responses["SCH"] = selected_non_school_response;
+                    user_response_values["SCH"] = selected_non_school_response_value;
+                    break;
+            };
+            break;
+        default:
+            // collect answer codes
+            var selected_responses = document.querySelectorAll('input[name=' + question_code + ']:checked');
+            var selected_response_codes = [];
+            selected_responses.forEach((response) => {
+                selected_response_codes.push(response.id);
+            });
+            user_responses[question_code] = selected_response_codes;
+            // collect answer values
+            var selected_response_values = [];
+            selected_responses.forEach((response) => {
+                selected_response_values.push(response.value);
+            });
+            user_response_values[question_code] = selected_response_values;
+            evaluate_streamlined_cert_responses();
+            // for streamlined cert questions, disable non-program/status answers when program/status answer is selected and vice versa
+            var streamlined_cert_questions = ["SCP", "SCS"];
+            if (streamlined_cert_questions.includes(question_code)){
+                var response_options = document.querySelectorAll("input[name=" + question_code + "]");
+                switch (true) {
+                    case selected_response_values.length == 0:
+                        response_options.forEach((option) =>{
+                            option.disabled = false;
+                        });
+                        break;
+                    case selected_response_values.includes("0"):
+                        response_options.forEach((option) => {
+                            switch (option.value) {
+                                case "0":
+                                    option.disabled = false;
+                                    break;
+                                default:
+                                    option.disabled = true;
+                                    break;
+                            };
+                        });
+                        break;
+                    case !selected_response_values.includes("0"):
+                        response_options.forEach((option) => {
+                            switch (option.value) {
+                                case "0":
+                                    option.disabled = true;
+                                    break;
+                                default:
+                                    option.disabled = false;
+                                    break;
+                            };
+                        });
+                        break;
+                };
+            };
+            break;
+    };
+    console.log(user_responses);
+    console.log(user_response_values);
+};
+
+// // create Question class
+class Question {
+    constructor(language_code, question_code, question_text, question_hint, answer_input_type, answer_text, answer_codes, answer_values) {
+        this.language_code = language_code;
+        this.question_code = question_code;
+        this.question_text = question_text;
+        this.question_hint = question_hint;
+        this.answer_input_type = answer_input_type;
+        this.answer_text = answer_text;
+        this.answer_codes = answer_codes;
+        this.answer_values = answer_values;
+    };
+    create_question_fragment() {
+        var question_fragment = new DocumentFragment();
+        var question_text = Object.assign(document.createElement("legend"), {
+            // id: this.question_code + "_text",
+            className: "usa-legend",
+            textContent: this.question_text
+        });
+        var question_hint = Object.assign(document.createElement("p"), {
+            id: this.question_code + "_hint",
+            className: "question_hint",
+            textContent: this.question_hint
+        });
+        question_fragment.append(question_text);
+        question_fragment.append(question_hint);
+        return question_fragment;
+    };
+    create_answer_fragment() {
+        var answer_fragment = new DocumentFragment();
+        var answer_fragment_fieldset = Object.assign(document.createElement("fieldset"), {
+            className: "usa-fieldset"
+        });
+        switch (true) {
+            case this.question_code == "INS":
+                // set up household size question
+                var household_size_input = Object.assign(document.createElement("input"), {
+                    type: "number",
+                    className: "usa-input",
+                    id: this.question_code,
+                    name: this.question_code,
+                    placeholder: "numbers only"
+                });
+                answer_fragment.append(answer_fragment_fieldset);
+                answer_fragment_fieldset.appendChild(household_size_input);
+                household_size_input.addEventListener("input", get_user_responses);
+                break;
+            case this.question_code == "SCH":
+                // set up school input
+                var school_combo_box_div = Object.assign(document.createElement("div"), {
+                    className: "usa-combo-box"
+                });
+                var school_combo_box = Object.assign(document.createElement("select"), {
+                    className: "usa-select",
+                    id: this.question_code,
+                    name: this.question_code
+                })
+                var school_combo_box_blank_option = Object.assign(document.createElement("option"), {
+                    value: "",
+                    textContent: "Select a school from this list"
+                });
+                school_combo_box.appendChild(school_combo_box_blank_option);
+                schools.forEach((school) => {
+                    var school_combo_box_option = Object.assign(document.createElement("option"), {
+                        value: school.code,
+                        textContent: "[" + school.district + "] " + school.school
+                    });
+                    school_combo_box_option.setAttribute("data-navigator_id", school.navigator_id);
+                    school_combo_box.appendChild(school_combo_box_option);
+                });
+                answer_fragment.append(answer_fragment_fieldset);
+                answer_fragment_fieldset.appendChild(school_combo_box_div);
+                school_combo_box_div.appendChild(school_combo_box);
+                school_combo_box.addEventListener("change", get_user_responses);
+                // no break, to add "not in list" and homeschool options via default case
+            default:
+                // applies to all other questions
+                answer_fragment.append(answer_fragment_fieldset);
+                for (let i = 0; i < this.answer_text.length; i++) {
+                    var answer_div = Object.assign(document.createElement("div"), {
+                        className: "usa-" + this.answer_input_type
+                    });
+                    var answer_input = Object.assign(document.createElement("input"), {
+                        type: this.answer_input_type,
+                        className: "usa-" + this.answer_input_type + "__input",
+                        id: this.answer_codes[i],
+                        name: this.question_code,
+                        value: this.answer_values[i]
+                    });
+                    var answer_input_label = Object.assign(document.createElement("label"), {
+                        className: "usa-" + this.answer_input_type + "__label",
+                        // for: this.answer_codes[i],
+                        textContent: this.answer_text[i]
+                    });
+                    answer_input_label.setAttribute("for", this.answer_codes[i]);
+                    // var get_user_responses = function(event) {
+                    //     var question_code = event.target.name;
+                    //     var selected_responses = document.querySelectorAll('input[name=' + question_code + ']:checked');
+                    //     var selected_response_codes = [];
+                    //     selected_responses.forEach((response) => {
+                    //         selected_response_codes.push(response.id);
+                    //     });
+                    //     user_responses[question_code] = selected_response_codes;
+                    //     console.log(user_responses);
+                    // };
+                    var line_break = document.createElement("br");
+                    answer_fragment_fieldset.appendChild(answer_div);
+                    answer_div.appendChild(answer_input);
+                    answer_div.appendChild(answer_input_label);
+                    answer_div.appendChild(line_break);
+                    answer_input.addEventListener("click", get_user_responses)
+                };
+                if (this.question_code == "SCH") {
+                    answer_input.addEventListener("click", get_user_responses);
+                };
+                break;
+        }
+        return answer_fragment;
+    };
+    display_question = function() {
+        var question_area = document.getElementById("section_content");
+        question_area.innerHTML = "";
+        var this_question_fragment = this.create_question_fragment();
+        var this_answer_fragment = this.create_answer_fragment();
+        question_area.append(this_question_fragment);
+        question_area.append(this_answer_fragment);
+        current_question_code = this.question_code;
+    };
+};
+
+// // questions
+var questions = __QUESTIONS__;
+
+var schools = __SCHOOLS__;
+var schools_navigator_id_list = [];
+schools.forEach((school) => {
+    schools_navigator_id_list.push(school.navigator_id);
+})
+
+// // transform questions into question bank for display and input
+var question_bank = {};
+questions.forEach((question) => {
+    question_bank[question.question_code] = new Question(question.language_code, question.question_code, question.question_text, question.question_hint, question.answer_input_type, question.answer_text, question.answer_codes, question.answer_values);
+});
+
+var income_guidelines = [
+    {"year": "2025-2026", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "annually", "fpl": 185, "amount": 28953},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "monthly", "fpl": 185, "amount": 2413},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "twice per month", "fpl": 185, "amount": 1207},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "every two weeks", "fpl": 185, "amount": 1114},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "weekly", "fpl": 185, "amount": 557},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "annually", "fpl": 130, "amount": 20345},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "monthly", "fpl": 130, "amount": 1696},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "twice per month", "fpl": 130, "amount": 848},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "every two weeks", "fpl": 130, "amount": 783},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "weekly", "fpl": 130, "amount": 392},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "annually", "fpl": 185, "amount": 39128},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "monthly", "fpl": 185, "amount": 3261},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "twice per month", "fpl": 185, "amount": 1631},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "every two weeks", "fpl": 185, "amount": 1505},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "weekly", "fpl": 185, "amount": 753},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "annually", "fpl": 130, "amount": 27495},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "monthly", "fpl": 130, "amount": 2292},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "twice per month", "fpl": 130, "amount": 1146},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "every two weeks", "fpl": 130, "amount": 1058},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "weekly", "fpl": 130, "amount": 529},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "annually", "fpl": 185, "amount": 49303},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "monthly", "fpl": 185, "amount": 4109},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "twice per month", "fpl": 185, "amount": 2055},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "every two weeks", "fpl": 185, "amount": 1897},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "weekly", "fpl": 185, "amount": 949},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "annually", "fpl": 130, "amount": 34645},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "monthly", "fpl": 130, "amount": 2888},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "twice per month", "fpl": 130, "amount": 1444},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "every two weeks", "fpl": 130, "amount": 1333},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "weekly", "fpl": 130, "amount": 667},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "annually", "fpl": 185, "amount": 59478},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "monthly", "fpl": 185, "amount": 4957},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "twice per month", "fpl": 185, "amount": 2479},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "every two weeks", "fpl": 185, "amount": 2288},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "weekly", "fpl": 185, "amount": 1144},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "annually", "fpl": 130, "amount": 41795},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "monthly", "fpl": 130, "amount": 3483},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "twice per month", "fpl": 130, "amount": 1742},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "every two weeks", "fpl": 130, "amount": 1608},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "weekly", "fpl": 130, "amount": 804},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "annually", "fpl": 185, "amount": 69653},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "monthly", "fpl": 185, "amount": 5805},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "twice per month", "fpl": 185, "amount": 2903},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "every two weeks", "fpl": 185, "amount": 2679},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "weekly", "fpl": 185, "amount": 1340},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "annually", "fpl": 130, "amount": 48945},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "monthly", "fpl": 130, "amount": 4079},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "twice per month", "fpl": 130, "amount": 2040},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "every two weeks", "fpl": 130, "amount": 1883},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "weekly", "fpl": 130, "amount": 942},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "annually", "fpl": 185, "amount": 79828},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "monthly", "fpl": 185, "amount": 6653},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "twice per month", "fpl": 185, "amount": 3327},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "every two weeks", "fpl": 185, "amount": 3071},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "weekly", "fpl": 185, "amount": 1536},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "annually", "fpl": 130, "amount": 56095},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "monthly", "fpl": 130, "amount": 4675},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "twice per month", "fpl": 130, "amount": 2338},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "every two weeks", "fpl": 130, "amount": 2158},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "weekly", "fpl": 130, "amount": 1079},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "annually", "fpl": 185, "amount": 90003},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "monthly", "fpl": 185, "amount": 7501},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "twice per month", "fpl": 185, "amount": 3751},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "every two weeks", "fpl": 185, "amount": 3462},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "weekly", "fpl": 185, "amount": 1731},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "annually", "fpl": 130, "amount": 63245},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "monthly", "fpl": 130, "amount": 5271},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "twice per month", "fpl": 130, "amount": 2636},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "every two weeks", "fpl": 130, "amount": 2433},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "weekly", "fpl": 130, "amount": 1217},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "annually", "fpl": 185, "amount": 100178},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "monthly", "fpl": 185, "amount": 8349},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "twice per month", "fpl": 185, "amount": 4175},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "every two weeks", "fpl": 185, "amount": 3853},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "weekly", "fpl": 185, "amount": 1927},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "annually", "fpl": 130, "amount": 70395},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "monthly", "fpl": 130, "amount": 5867},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "twice per month", "fpl": 130, "amount": 2934},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "every two weeks", "fpl": 130, "amount": 2708},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "weekly", "fpl": 130, "amount": 1354},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "annually", "fpl": 185, "amount": 110353},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "monthly", "fpl": 185, "amount": 9197},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "twice per month", "fpl": 185, "amount": 4599},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "every two weeks", "fpl": 185, "amount": 4245},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "weekly", "fpl": 185, "amount": 2123},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "annually", "fpl": 130, "amount": 77545},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "monthly", "fpl": 130, "amount": 6463},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "twice per month", "fpl": 130, "amount": 3232},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "every two weeks", "fpl": 130, "amount": 2983},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "weekly", "fpl": 130, "amount": 1492},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "annually", "fpl": 185, "amount": 120528},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "monthly", "fpl": 185, "amount": 10045},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "twice per month", "fpl": 185, "amount": 5023},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "every two weeks", "fpl": 185, "amount": 4637},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "weekly", "fpl": 185, "amount": 2319},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "annually", "fpl": 130, "amount": 84695},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "monthly", "fpl": 130, "amount": 7059},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "twice per month", "fpl": 130, "amount": 3530},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "every two weeks", "fpl": 130, "amount": 3258},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "weekly", "fpl": 130, "amount": 1630},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "annually", "fpl": 185, "amount": 130703},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "monthly", "fpl": 185, "amount": 10893},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "twice per month", "fpl": 185, "amount": 5447},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "every two weeks", "fpl": 185, "amount": 5029},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "weekly", "fpl": 185, "amount": 2515},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "annually", "fpl": 130, "amount": 91845},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "monthly", "fpl": 130, "amount": 7655},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "twice per month", "fpl": 130, "amount": 3828},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "every two weeks", "fpl": 130, "amount": 3533},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "weekly", "fpl": 130, "amount": 1768},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "annually", "fpl": 185, "amount": 140878},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "monthly", "fpl": 185, "amount": 11741},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "twice per month", "fpl": 185, "amount": 5871},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "every two weeks", "fpl": 185, "amount": 5421},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "weekly", "fpl": 185, "amount": 2711},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "annually", "fpl": 130, "amount": 98995},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "monthly", "fpl": 130, "amount": 8251},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "twice per month", "fpl": 130, "amount": 4126},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "every two weeks", "fpl": 130, "amount": 3808},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "weekly", "fpl": 130, "amount": 1906},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "annually", "fpl": 185, "amount": 151053},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "monthly", "fpl": 185, "amount": 12589},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "twice per month", "fpl": 185, "amount": 6295},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "every two weeks", "fpl": 185, "amount": 5813},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "weekly", "fpl": 185, "amount": 2907},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "annually", "fpl": 130, "amount": 106145},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "monthly", "fpl": 130, "amount": 8847},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "twice per month", "fpl": 130, "amount": 4424},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "every two weeks", "fpl": 130, "amount": 4083},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "weekly", "fpl": 130, "amount": 2044},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "annually", "fpl": 185, "amount": 161228},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "monthly", "fpl": 185, "amount": 13437},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "twice per month", "fpl": 185, "amount": 6719},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "every two weeks", "fpl": 185, "amount": 6205},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "weekly", "fpl": 185, "amount": 3103},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "annually", "fpl": 130, "amount": 113295},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "monthly", "fpl": 130, "amount": 9443},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "twice per month", "fpl": 130, "amount": 4722},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "every two weeks", "fpl": 130, "amount": 4358},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "weekly", "fpl": 130, "amount": 2182},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "annually", "fpl": 185, "amount": 171403},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "monthly", "fpl": 185, "amount": 14285},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "twice per month", "fpl": 185, "amount": 7143},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "every two weeks", "fpl": 185, "amount": 6597},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "weekly", "fpl": 185, "amount": 3299},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "annually", "fpl": 130, "amount": 120445},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "monthly", "fpl": 130, "amount": 10039},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "twice per month", "fpl": 130, "amount": 5020},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "every two weeks", "fpl": 130, "amount": 4633},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "weekly", "fpl": 130, "amount": 2320},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "annually", "fpl": 185, "amount": 181578},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "monthly", "fpl": 185, "amount": 15133},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "twice per month", "fpl": 185, "amount": 7567},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "every two weeks", "fpl": 185, "amount": 6989},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "weekly", "fpl": 185, "amount": 3495},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "annually", "fpl": 130, "amount": 127595},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "monthly", "fpl": 130, "amount": 10635},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "twice per month", "fpl": 130, "amount": 5318},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "every two weeks", "fpl": 130, "amount": 4908},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "weekly", "fpl": 130, "amount": 2458},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "annually", "fpl": 185, "amount": 191753},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "monthly", "fpl": 185, "amount": 15981},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "twice per month", "fpl": 185, "amount": 7991},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "every two weeks", "fpl": 185, "amount": 7381},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "weekly", "fpl": 185, "amount": 3691},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "annually", "fpl": 130, "amount": 134745},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "monthly", "fpl": 130, "amount": 11231},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "twice per month", "fpl": 130, "amount": 5616},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "every two weeks", "fpl": 130, "amount": 5183},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "weekly", "fpl": 130, "amount": 2596},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "annually", "fpl": 185, "amount": 201928},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "monthly", "fpl": 185, "amount": 16829},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "twice per month", "fpl": 185, "amount": 8415},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "every two weeks", "fpl": 185, "amount": 7773},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "weekly", "fpl": 185, "amount": 3887},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "annually", "fpl": 130, "amount": 141895},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "monthly", "fpl": 130, "amount": 11827},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "twice per month", "fpl": 130, "amount": 5914},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "every two weeks", "fpl": 130, "amount": 5458},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "weekly", "fpl": 130, "amount": 2734},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "annually", "fpl": 185, "amount": 212103},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "monthly", "fpl": 185, "amount": 17677},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "twice per month", "fpl": 185, "amount": 8839},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "every two weeks", "fpl": 185, "amount": 8165},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "weekly", "fpl": 185, "amount": 4083},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "annually", "fpl": 130, "amount": 149045},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "monthly", "fpl": 130, "amount": 12423},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "twice per month", "fpl": 130, "amount": 6212},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "every two weeks", "fpl": 130, "amount": 5733},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "weekly", "fpl": 130, "amount": 2872},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "annually", "fpl": 185, "amount": 222278},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "monthly", "fpl": 185, "amount": 18525},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "twice per month", "fpl": 185, "amount": 9263},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "every two weeks", "fpl": 185, "amount": 8557},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "weekly", "fpl": 185, "amount": 4279},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "annually", "fpl": 130, "amount": 156195},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "monthly", "fpl": 130, "amount": 13019},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "twice per month", "fpl": 130, "amount": 6510},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "every two weeks", "fpl": 130, "amount": 6008},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "weekly", "fpl": 130, "amount": 3010},
+{"year": "2025-2026", "place": "AK", "household_size": 1, "income_frequency": "annually", "fpl": 185, "amount": 36168},
+{"year": "2025-2026", "place": "AK", "household_size": 1, "income_frequency": "monthly", "fpl": 185, "amount": 3014},
+{"year": "2025-2026", "place": "AK", "household_size": 1, "income_frequency": "twice per month", "fpl": 185, "amount": 1507},
+{"year": "2025-2026", "place": "AK", "household_size": 1, "income_frequency": "every two weeks", "fpl": 185, "amount": 1392},
+{"year": "2025-2026", "place": "AK", "household_size": 1, "income_frequency": "weekly", "fpl": 185, "amount": 696},
+{"year": "2025-2026", "place": "AK", "household_size": 1, "income_frequency": "annually", "fpl": 130, "amount": 25415},
+{"year": "2025-2026", "place": "AK", "household_size": 1, "income_frequency": "monthly", "fpl": 130, "amount": 2118},
+{"year": "2025-2026", "place": "AK", "household_size": 1, "income_frequency": "twice per month", "fpl": 130, "amount": 1059},
+{"year": "2025-2026", "place": "AK", "household_size": 1, "income_frequency": "every two weeks", "fpl": 130, "amount": 978},
+{"year": "2025-2026", "place": "AK", "household_size": 1, "income_frequency": "weekly", "fpl": 130, "amount": 489},
+{"year": "2025-2026", "place": "AK", "household_size": 2, "income_frequency": "annually", "fpl": 185, "amount": 48896},
+{"year": "2025-2026", "place": "AK", "household_size": 2, "income_frequency": "monthly", "fpl": 185, "amount": 4075},
+{"year": "2025-2026", "place": "AK", "household_size": 2, "income_frequency": "twice per month", "fpl": 185, "amount": 2038},
+{"year": "2025-2026", "place": "AK", "household_size": 2, "income_frequency": "every two weeks", "fpl": 185, "amount": 1881},
+{"year": "2025-2026", "place": "AK", "household_size": 2, "income_frequency": "weekly", "fpl": 185, "amount": 941},
+{"year": "2025-2026", "place": "AK", "household_size": 2, "income_frequency": "annually", "fpl": 130, "amount": 34359},
+{"year": "2025-2026", "place": "AK", "household_size": 2, "income_frequency": "monthly", "fpl": 130, "amount": 2864},
+{"year": "2025-2026", "place": "AK", "household_size": 2, "income_frequency": "twice per month", "fpl": 130, "amount": 1432},
+{"year": "2025-2026", "place": "AK", "household_size": 2, "income_frequency": "every two weeks", "fpl": 130, "amount": 1322},
+{"year": "2025-2026", "place": "AK", "household_size": 2, "income_frequency": "weekly", "fpl": 130, "amount": 661},
+{"year": "2025-2026", "place": "AK", "household_size": 3, "income_frequency": "annually", "fpl": 185, "amount": 61624},
+{"year": "2025-2026", "place": "AK", "household_size": 3, "income_frequency": "monthly", "fpl": 185, "amount": 5136},
+{"year": "2025-2026", "place": "AK", "household_size": 3, "income_frequency": "twice per month", "fpl": 185, "amount": 2568},
+{"year": "2025-2026", "place": "AK", "household_size": 3, "income_frequency": "every two weeks", "fpl": 185, "amount": 2371},
+{"year": "2025-2026", "place": "AK", "household_size": 3, "income_frequency": "weekly", "fpl": 185, "amount": 1186},
+{"year": "2025-2026", "place": "AK", "household_size": 3, "income_frequency": "annually", "fpl": 130, "amount": 43303},
+{"year": "2025-2026", "place": "AK", "household_size": 3, "income_frequency": "monthly", "fpl": 130, "amount": 3609},
+{"year": "2025-2026", "place": "AK", "household_size": 3, "income_frequency": "twice per month", "fpl": 130, "amount": 1805},
+{"year": "2025-2026", "place": "AK", "household_size": 3, "income_frequency": "every two weeks", "fpl": 130, "amount": 1666},
+{"year": "2025-2026", "place": "AK", "household_size": 3, "income_frequency": "weekly", "fpl": 130, "amount": 833},
+{"year": "2025-2026", "place": "AK", "household_size": 4, "income_frequency": "annually", "fpl": 185, "amount": 74352},
+{"year": "2025-2026", "place": "AK", "household_size": 4, "income_frequency": "monthly", "fpl": 185, "amount": 6196},
+{"year": "2025-2026", "place": "AK", "household_size": 4, "income_frequency": "twice per month", "fpl": 185, "amount": 3098},
+{"year": "2025-2026", "place": "AK", "household_size": 4, "income_frequency": "every two weeks", "fpl": 185, "amount": 2860},
+{"year": "2025-2026", "place": "AK", "household_size": 4, "income_frequency": "weekly", "fpl": 185, "amount": 1430},
+{"year": "2025-2026", "place": "AK", "household_size": 4, "income_frequency": "annually", "fpl": 130, "amount": 52247},
+{"year": "2025-2026", "place": "AK", "household_size": 4, "income_frequency": "monthly", "fpl": 130, "amount": 4354},
+{"year": "2025-2026", "place": "AK", "household_size": 4, "income_frequency": "twice per month", "fpl": 130, "amount": 2177},
+{"year": "2025-2026", "place": "AK", "household_size": 4, "income_frequency": "every two weeks", "fpl": 130, "amount": 2010},
+{"year": "2025-2026", "place": "AK", "household_size": 4, "income_frequency": "weekly", "fpl": 130, "amount": 1005},
+{"year": "2025-2026", "place": "AK", "household_size": 5, "income_frequency": "annually", "fpl": 185, "amount": 87080},
+{"year": "2025-2026", "place": "AK", "household_size": 5, "income_frequency": "monthly", "fpl": 185, "amount": 7257},
+{"year": "2025-2026", "place": "AK", "household_size": 5, "income_frequency": "twice per month", "fpl": 185, "amount": 3629},
+{"year": "2025-2026", "place": "AK", "household_size": 5, "income_frequency": "every two weeks", "fpl": 185, "amount": 3350},
+{"year": "2025-2026", "place": "AK", "household_size": 5, "income_frequency": "weekly", "fpl": 185, "amount": 1675},
+{"year": "2025-2026", "place": "AK", "household_size": 5, "income_frequency": "annually", "fpl": 130, "amount": 61191},
+{"year": "2025-2026", "place": "AK", "household_size": 5, "income_frequency": "monthly", "fpl": 130, "amount": 5100},
+{"year": "2025-2026", "place": "AK", "household_size": 5, "income_frequency": "twice per month", "fpl": 130, "amount": 2550},
+{"year": "2025-2026", "place": "AK", "household_size": 5, "income_frequency": "every two weeks", "fpl": 130, "amount": 2354},
+{"year": "2025-2026", "place": "AK", "household_size": 5, "income_frequency": "weekly", "fpl": 130, "amount": 1177},
+{"year": "2025-2026", "place": "AK", "household_size": 6, "income_frequency": "annually", "fpl": 185, "amount": 99808},
+{"year": "2025-2026", "place": "AK", "household_size": 6, "income_frequency": "monthly", "fpl": 185, "amount": 8318},
+{"year": "2025-2026", "place": "AK", "household_size": 6, "income_frequency": "twice per month", "fpl": 185, "amount": 4159},
+{"year": "2025-2026", "place": "AK", "household_size": 6, "income_frequency": "every two weeks", "fpl": 185, "amount": 3839},
+{"year": "2025-2026", "place": "AK", "household_size": 6, "income_frequency": "weekly", "fpl": 185, "amount": 1920},
+{"year": "2025-2026", "place": "AK", "household_size": 6, "income_frequency": "annually", "fpl": 130, "amount": 70135},
+{"year": "2025-2026", "place": "AK", "household_size": 6, "income_frequency": "monthly", "fpl": 130, "amount": 5845},
+{"year": "2025-2026", "place": "AK", "household_size": 6, "income_frequency": "twice per month", "fpl": 130, "amount": 2923},
+{"year": "2025-2026", "place": "AK", "household_size": 6, "income_frequency": "every two weeks", "fpl": 130, "amount": 2698},
+{"year": "2025-2026", "place": "AK", "household_size": 6, "income_frequency": "weekly", "fpl": 130, "amount": 1349},
+{"year": "2025-2026", "place": "AK", "household_size": 7, "income_frequency": "annually", "fpl": 185, "amount": 112536},
+{"year": "2025-2026", "place": "AK", "household_size": 7, "income_frequency": "monthly", "fpl": 185, "amount": 9378},
+{"year": "2025-2026", "place": "AK", "household_size": 7, "income_frequency": "twice per month", "fpl": 185, "amount": 4689},
+{"year": "2025-2026", "place": "AK", "household_size": 7, "income_frequency": "every two weeks", "fpl": 185, "amount": 4329},
+{"year": "2025-2026", "place": "AK", "household_size": 7, "income_frequency": "weekly", "fpl": 185, "amount": 2165},
+{"year": "2025-2026", "place": "AK", "household_size": 7, "income_frequency": "annually", "fpl": 130, "amount": 79079},
+{"year": "2025-2026", "place": "AK", "household_size": 7, "income_frequency": "monthly", "fpl": 130, "amount": 6590},
+{"year": "2025-2026", "place": "AK", "household_size": 7, "income_frequency": "twice per month", "fpl": 130, "amount": 3295},
+{"year": "2025-2026", "place": "AK", "household_size": 7, "income_frequency": "every two weeks", "fpl": 130, "amount": 3042},
+{"year": "2025-2026", "place": "AK", "household_size": 7, "income_frequency": "weekly", "fpl": 130, "amount": 1521},
+{"year": "2025-2026", "place": "AK", "household_size": 8, "income_frequency": "annually", "fpl": 185, "amount": 125264},
+{"year": "2025-2026", "place": "AK", "household_size": 8, "income_frequency": "monthly", "fpl": 185, "amount": 10439},
+{"year": "2025-2026", "place": "AK", "household_size": 8, "income_frequency": "twice per month", "fpl": 185, "amount": 5220},
+{"year": "2025-2026", "place": "AK", "household_size": 8, "income_frequency": "every two weeks", "fpl": 185, "amount": 4818},
+{"year": "2025-2026", "place": "AK", "household_size": 8, "income_frequency": "weekly", "fpl": 185, "amount": 2409},
+{"year": "2025-2026", "place": "AK", "household_size": 8, "income_frequency": "annually", "fpl": 130, "amount": 88023},
+{"year": "2025-2026", "place": "AK", "household_size": 8, "income_frequency": "monthly", "fpl": 130, "amount": 7336},
+{"year": "2025-2026", "place": "AK", "household_size": 8, "income_frequency": "twice per month", "fpl": 130, "amount": 3668},
+{"year": "2025-2026", "place": "AK", "household_size": 8, "income_frequency": "every two weeks", "fpl": 130, "amount": 3386},
+{"year": "2025-2026", "place": "AK", "household_size": 8, "income_frequency": "weekly", "fpl": 130, "amount": 1693},
+{"year": "2025-2026", "place": "AK", "household_size": 9, "income_frequency": "annually", "fpl": 185, "amount": 137992},
+{"year": "2025-2026", "place": "AK", "household_size": 9, "income_frequency": "monthly", "fpl": 185, "amount": 11500},
+{"year": "2025-2026", "place": "AK", "household_size": 9, "income_frequency": "twice per month", "fpl": 185, "amount": 5751},
+{"year": "2025-2026", "place": "AK", "household_size": 9, "income_frequency": "every two weeks", "fpl": 185, "amount": 5308},
+{"year": "2025-2026", "place": "AK", "household_size": 9, "income_frequency": "weekly", "fpl": 185, "amount": 2654},
+{"year": "2025-2026", "place": "AK", "household_size": 9, "income_frequency": "annually", "fpl": 130, "amount": 96967},
+{"year": "2025-2026", "place": "AK", "household_size": 9, "income_frequency": "monthly", "fpl": 130, "amount": 8082},
+{"year": "2025-2026", "place": "AK", "household_size": 9, "income_frequency": "twice per month", "fpl": 130, "amount": 4041},
+{"year": "2025-2026", "place": "AK", "household_size": 9, "income_frequency": "every two weeks", "fpl": 130, "amount": 3730},
+{"year": "2025-2026", "place": "AK", "household_size": 9, "income_frequency": "weekly", "fpl": 130, "amount": 1865},
+{"year": "2025-2026", "place": "AK", "household_size": 10, "income_frequency": "annually", "fpl": 185, "amount": 150720},
+{"year": "2025-2026", "place": "AK", "household_size": 10, "income_frequency": "monthly", "fpl": 185, "amount": 12561},
+{"year": "2025-2026", "place": "AK", "household_size": 10, "income_frequency": "twice per month", "fpl": 185, "amount": 6282},
+{"year": "2025-2026", "place": "AK", "household_size": 10, "income_frequency": "every two weeks", "fpl": 185, "amount": 5798},
+{"year": "2025-2026", "place": "AK", "household_size": 10, "income_frequency": "weekly", "fpl": 185, "amount": 2899},
+{"year": "2025-2026", "place": "AK", "household_size": 10, "income_frequency": "annually", "fpl": 130, "amount": 105911},
+{"year": "2025-2026", "place": "AK", "household_size": 10, "income_frequency": "monthly", "fpl": 130, "amount": 8828},
+{"year": "2025-2026", "place": "AK", "household_size": 10, "income_frequency": "twice per month", "fpl": 130, "amount": 4414},
+{"year": "2025-2026", "place": "AK", "household_size": 10, "income_frequency": "every two weeks", "fpl": 130, "amount": 4074},
+{"year": "2025-2026", "place": "AK", "household_size": 10, "income_frequency": "weekly", "fpl": 130, "amount": 2037},
+{"year": "2025-2026", "place": "AK", "household_size": 11, "income_frequency": "annually", "fpl": 185, "amount": 163448},
+{"year": "2025-2026", "place": "AK", "household_size": 11, "income_frequency": "monthly", "fpl": 185, "amount": 13622},
+{"year": "2025-2026", "place": "AK", "household_size": 11, "income_frequency": "twice per month", "fpl": 185, "amount": 6813},
+{"year": "2025-2026", "place": "AK", "household_size": 11, "income_frequency": "every two weeks", "fpl": 185, "amount": 6288},
+{"year": "2025-2026", "place": "AK", "household_size": 11, "income_frequency": "weekly", "fpl": 185, "amount": 3144},
+{"year": "2025-2026", "place": "AK", "household_size": 11, "income_frequency": "annually", "fpl": 130, "amount": 114855},
+{"year": "2025-2026", "place": "AK", "household_size": 11, "income_frequency": "monthly", "fpl": 130, "amount": 9574},
+{"year": "2025-2026", "place": "AK", "household_size": 11, "income_frequency": "twice per month", "fpl": 130, "amount": 4787},
+{"year": "2025-2026", "place": "AK", "household_size": 11, "income_frequency": "every two weeks", "fpl": 130, "amount": 4418},
+{"year": "2025-2026", "place": "AK", "household_size": 11, "income_frequency": "weekly", "fpl": 130, "amount": 2209},
+{"year": "2025-2026", "place": "AK", "household_size": 12, "income_frequency": "annually", "fpl": 185, "amount": 176176},
+{"year": "2025-2026", "place": "AK", "household_size": 12, "income_frequency": "monthly", "fpl": 185, "amount": 14683},
+{"year": "2025-2026", "place": "AK", "household_size": 12, "income_frequency": "twice per month", "fpl": 185, "amount": 7344},
+{"year": "2025-2026", "place": "AK", "household_size": 12, "income_frequency": "every two weeks", "fpl": 185, "amount": 6778},
+{"year": "2025-2026", "place": "AK", "household_size": 12, "income_frequency": "weekly", "fpl": 185, "amount": 3389},
+{"year": "2025-2026", "place": "AK", "household_size": 12, "income_frequency": "annually", "fpl": 130, "amount": 123799},
+{"year": "2025-2026", "place": "AK", "household_size": 12, "income_frequency": "monthly", "fpl": 130, "amount": 10320},
+{"year": "2025-2026", "place": "AK", "household_size": 12, "income_frequency": "twice per month", "fpl": 130, "amount": 5160},
+{"year": "2025-2026", "place": "AK", "household_size": 12, "income_frequency": "every two weeks", "fpl": 130, "amount": 4762},
+{"year": "2025-2026", "place": "AK", "household_size": 12, "income_frequency": "weekly", "fpl": 130, "amount": 2381},
+{"year": "2025-2026", "place": "AK", "household_size": 13, "income_frequency": "annually", "fpl": 185, "amount": 188904},
+{"year": "2025-2026", "place": "AK", "household_size": 13, "income_frequency": "monthly", "fpl": 185, "amount": 15744},
+{"year": "2025-2026", "place": "AK", "household_size": 13, "income_frequency": "twice per month", "fpl": 185, "amount": 7875},
+{"year": "2025-2026", "place": "AK", "household_size": 13, "income_frequency": "every two weeks", "fpl": 185, "amount": 7268},
+{"year": "2025-2026", "place": "AK", "household_size": 13, "income_frequency": "weekly", "fpl": 185, "amount": 3634},
+{"year": "2025-2026", "place": "AK", "household_size": 13, "income_frequency": "annually", "fpl": 130, "amount": 132743},
+{"year": "2025-2026", "place": "AK", "household_size": 13, "income_frequency": "monthly", "fpl": 130, "amount": 11066},
+{"year": "2025-2026", "place": "AK", "household_size": 13, "income_frequency": "twice per month", "fpl": 130, "amount": 5533},
+{"year": "2025-2026", "place": "AK", "household_size": 13, "income_frequency": "every two weeks", "fpl": 130, "amount": 5106},
+{"year": "2025-2026", "place": "AK", "household_size": 13, "income_frequency": "weekly", "fpl": 130, "amount": 2553},
+{"year": "2025-2026", "place": "AK", "household_size": 14, "income_frequency": "annually", "fpl": 185, "amount": 201632},
+{"year": "2025-2026", "place": "AK", "household_size": 14, "income_frequency": "monthly", "fpl": 185, "amount": 16805},
+{"year": "2025-2026", "place": "AK", "household_size": 14, "income_frequency": "twice per month", "fpl": 185, "amount": 8406},
+{"year": "2025-2026", "place": "AK", "household_size": 14, "income_frequency": "every two weeks", "fpl": 185, "amount": 7758},
+{"year": "2025-2026", "place": "AK", "household_size": 14, "income_frequency": "weekly", "fpl": 185, "amount": 3879},
+{"year": "2025-2026", "place": "AK", "household_size": 14, "income_frequency": "annually", "fpl": 130, "amount": 141687},
+{"year": "2025-2026", "place": "AK", "household_size": 14, "income_frequency": "monthly", "fpl": 130, "amount": 11812},
+{"year": "2025-2026", "place": "AK", "household_size": 14, "income_frequency": "twice per month", "fpl": 130, "amount": 5906},
+{"year": "2025-2026", "place": "AK", "household_size": 14, "income_frequency": "every two weeks", "fpl": 130, "amount": 5450},
+{"year": "2025-2026", "place": "AK", "household_size": 14, "income_frequency": "weekly", "fpl": 130, "amount": 2725},
+{"year": "2025-2026", "place": "AK", "household_size": 15, "income_frequency": "annually", "fpl": 185, "amount": 214360},
+{"year": "2025-2026", "place": "AK", "household_size": 15, "income_frequency": "monthly", "fpl": 185, "amount": 17866},
+{"year": "2025-2026", "place": "AK", "household_size": 15, "income_frequency": "twice per month", "fpl": 185, "amount": 8937},
+{"year": "2025-2026", "place": "AK", "household_size": 15, "income_frequency": "every two weeks", "fpl": 185, "amount": 8248},
+{"year": "2025-2026", "place": "AK", "household_size": 15, "income_frequency": "weekly", "fpl": 185, "amount": 4124},
+{"year": "2025-2026", "place": "AK", "household_size": 15, "income_frequency": "annually", "fpl": 130, "amount": 150631},
+{"year": "2025-2026", "place": "AK", "household_size": 15, "income_frequency": "monthly", "fpl": 130, "amount": 12558},
+{"year": "2025-2026", "place": "AK", "household_size": 15, "income_frequency": "twice per month", "fpl": 130, "amount": 6279},
+{"year": "2025-2026", "place": "AK", "household_size": 15, "income_frequency": "every two weeks", "fpl": 130, "amount": 5794},
+{"year": "2025-2026", "place": "AK", "household_size": 15, "income_frequency": "weekly", "fpl": 130, "amount": 2897},
+{"year": "2025-2026", "place": "AK", "household_size": 16, "income_frequency": "annually", "fpl": 185, "amount": 227088},
+{"year": "2025-2026", "place": "AK", "household_size": 16, "income_frequency": "monthly", "fpl": 185, "amount": 18927},
+{"year": "2025-2026", "place": "AK", "household_size": 16, "income_frequency": "twice per month", "fpl": 185, "amount": 9468},
+{"year": "2025-2026", "place": "AK", "household_size": 16, "income_frequency": "every two weeks", "fpl": 185, "amount": 8738},
+{"year": "2025-2026", "place": "AK", "household_size": 16, "income_frequency": "weekly", "fpl": 185, "amount": 4369},
+{"year": "2025-2026", "place": "AK", "household_size": 16, "income_frequency": "annually", "fpl": 130, "amount": 159575},
+{"year": "2025-2026", "place": "AK", "household_size": 16, "income_frequency": "monthly", "fpl": 130, "amount": 13304},
+{"year": "2025-2026", "place": "AK", "household_size": 16, "income_frequency": "twice per month", "fpl": 130, "amount": 6652},
+{"year": "2025-2026", "place": "AK", "household_size": 16, "income_frequency": "every two weeks", "fpl": 130, "amount": 6138},
+{"year": "2025-2026", "place": "AK", "household_size": 16, "income_frequency": "weekly", "fpl": 130, "amount": 3069},
+{"year": "2025-2026", "place": "AK", "household_size": 17, "income_frequency": "annually", "fpl": 185, "amount": 239816},
+{"year": "2025-2026", "place": "AK", "household_size": 17, "income_frequency": "monthly", "fpl": 185, "amount": 19988},
+{"year": "2025-2026", "place": "AK", "household_size": 17, "income_frequency": "twice per month", "fpl": 185, "amount": 9999},
+{"year": "2025-2026", "place": "AK", "household_size": 17, "income_frequency": "every two weeks", "fpl": 185, "amount": 9228},
+{"year": "2025-2026", "place": "AK", "household_size": 17, "income_frequency": "weekly", "fpl": 185, "amount": 4614},
+{"year": "2025-2026", "place": "AK", "household_size": 17, "income_frequency": "annually", "fpl": 130, "amount": 168519},
+{"year": "2025-2026", "place": "AK", "household_size": 17, "income_frequency": "monthly", "fpl": 130, "amount": 14050},
+{"year": "2025-2026", "place": "AK", "household_size": 17, "income_frequency": "twice per month", "fpl": 130, "amount": 7025},
+{"year": "2025-2026", "place": "AK", "household_size": 17, "income_frequency": "every two weeks", "fpl": 130, "amount": 6482},
+{"year": "2025-2026", "place": "AK", "household_size": 17, "income_frequency": "weekly", "fpl": 130, "amount": 3241},
+{"year": "2025-2026", "place": "AK", "household_size": 18, "income_frequency": "annually", "fpl": 185, "amount": 252544},
+{"year": "2025-2026", "place": "AK", "household_size": 18, "income_frequency": "monthly", "fpl": 185, "amount": 21049},
+{"year": "2025-2026", "place": "AK", "household_size": 18, "income_frequency": "twice per month", "fpl": 185, "amount": 10530},
+{"year": "2025-2026", "place": "AK", "household_size": 18, "income_frequency": "every two weeks", "fpl": 185, "amount": 9718},
+{"year": "2025-2026", "place": "AK", "household_size": 18, "income_frequency": "weekly", "fpl": 185, "amount": 4859},
+{"year": "2025-2026", "place": "AK", "household_size": 18, "income_frequency": "annually", "fpl": 130, "amount": 177463},
+{"year": "2025-2026", "place": "AK", "household_size": 18, "income_frequency": "monthly", "fpl": 130, "amount": 14796},
+{"year": "2025-2026", "place": "AK", "household_size": 18, "income_frequency": "twice per month", "fpl": 130, "amount": 7398},
+{"year": "2025-2026", "place": "AK", "household_size": 18, "income_frequency": "every two weeks", "fpl": 130, "amount": 6826},
+{"year": "2025-2026", "place": "AK", "household_size": 18, "income_frequency": "weekly", "fpl": 130, "amount": 3413},
+{"year": "2025-2026", "place": "AK", "household_size": 19, "income_frequency": "annually", "fpl": 185, "amount": 265272},
+{"year": "2025-2026", "place": "AK", "household_size": 19, "income_frequency": "monthly", "fpl": 185, "amount": 22110},
+{"year": "2025-2026", "place": "AK", "household_size": 19, "income_frequency": "twice per month", "fpl": 185, "amount": 11061},
+{"year": "2025-2026", "place": "AK", "household_size": 19, "income_frequency": "every two weeks", "fpl": 185, "amount": 10208},
+{"year": "2025-2026", "place": "AK", "household_size": 19, "income_frequency": "weekly", "fpl": 185, "amount": 5104},
+{"year": "2025-2026", "place": "AK", "household_size": 19, "income_frequency": "annually", "fpl": 130, "amount": 186407},
+{"year": "2025-2026", "place": "AK", "household_size": 19, "income_frequency": "monthly", "fpl": 130, "amount": 15542},
+{"year": "2025-2026", "place": "AK", "household_size": 19, "income_frequency": "twice per month", "fpl": 130, "amount": 7771},
+{"year": "2025-2026", "place": "AK", "household_size": 19, "income_frequency": "every two weeks", "fpl": 130, "amount": 7170},
+{"year": "2025-2026", "place": "AK", "household_size": 19, "income_frequency": "weekly", "fpl": 130, "amount": 3585},
+{"year": "2025-2026", "place": "AK", "household_size": 20, "income_frequency": "annually", "fpl": 185, "amount": 278000},
+{"year": "2025-2026", "place": "AK", "household_size": 20, "income_frequency": "monthly", "fpl": 185, "amount": 23171},
+{"year": "2025-2026", "place": "AK", "household_size": 20, "income_frequency": "twice per month", "fpl": 185, "amount": 11592},
+{"year": "2025-2026", "place": "AK", "household_size": 20, "income_frequency": "every two weeks", "fpl": 185, "amount": 10698},
+{"year": "2025-2026", "place": "AK", "household_size": 20, "income_frequency": "weekly", "fpl": 185, "amount": 5349},
+{"year": "2025-2026", "place": "AK", "household_size": 20, "income_frequency": "annually", "fpl": 130, "amount": 195351},
+{"year": "2025-2026", "place": "AK", "household_size": 20, "income_frequency": "monthly", "fpl": 130, "amount": 16288},
+{"year": "2025-2026", "place": "AK", "household_size": 20, "income_frequency": "twice per month", "fpl": 130, "amount": 8144},
+{"year": "2025-2026", "place": "AK", "household_size": 20, "income_frequency": "every two weeks", "fpl": 130, "amount": 7514},
+{"year": "2025-2026", "place": "AK", "household_size": 20, "income_frequency": "weekly", "fpl": 130, "amount": 3757},
+{"year": "2025-2026", "place": "HI", "household_size": 1, "income_frequency": "annually", "fpl": 185, "amount": 33282},
+{"year": "2025-2026", "place": "HI", "household_size": 1, "income_frequency": "monthly", "fpl": 185, "amount": 2774},
+{"year": "2025-2026", "place": "HI", "household_size": 1, "income_frequency": "twice per month", "fpl": 185, "amount": 1387},
+{"year": "2025-2026", "place": "HI", "household_size": 1, "income_frequency": "every two weeks", "fpl": 185, "amount": 1281},
+{"year": "2025-2026", "place": "HI", "household_size": 1, "income_frequency": "weekly", "fpl": 185, "amount": 641},
+{"year": "2025-2026", "place": "HI", "household_size": 1, "income_frequency": "annually", "fpl": 130, "amount": 23387},
+{"year": "2025-2026", "place": "HI", "household_size": 1, "income_frequency": "monthly", "fpl": 130, "amount": 1949},
+{"year": "2025-2026", "place": "HI", "household_size": 1, "income_frequency": "twice per month", "fpl": 130, "amount": 975},
+{"year": "2025-2026", "place": "HI", "household_size": 1, "income_frequency": "every two weeks", "fpl": 130, "amount": 900},
+{"year": "2025-2026", "place": "HI", "household_size": 1, "income_frequency": "weekly", "fpl": 130, "amount": 450},
+{"year": "2025-2026", "place": "HI", "household_size": 2, "income_frequency": "annually", "fpl": 185, "amount": 44992},
+{"year": "2025-2026", "place": "HI", "household_size": 2, "income_frequency": "monthly", "fpl": 185, "amount": 3750},
+{"year": "2025-2026", "place": "HI", "household_size": 2, "income_frequency": "twice per month", "fpl": 185, "amount": 1875},
+{"year": "2025-2026", "place": "HI", "household_size": 2, "income_frequency": "every two weeks", "fpl": 185, "amount": 1731},
+{"year": "2025-2026", "place": "HI", "household_size": 2, "income_frequency": "weekly", "fpl": 185, "amount": 866},
+{"year": "2025-2026", "place": "HI", "household_size": 2, "income_frequency": "annually", "fpl": 130, "amount": 31616},
+{"year": "2025-2026", "place": "HI", "household_size": 2, "income_frequency": "monthly", "fpl": 130, "amount": 2635},
+{"year": "2025-2026", "place": "HI", "household_size": 2, "income_frequency": "twice per month", "fpl": 130, "amount": 1318},
+{"year": "2025-2026", "place": "HI", "household_size": 2, "income_frequency": "every two weeks", "fpl": 130, "amount": 1216},
+{"year": "2025-2026", "place": "HI", "household_size": 2, "income_frequency": "weekly", "fpl": 130, "amount": 608},
+{"year": "2025-2026", "place": "HI", "household_size": 3, "income_frequency": "annually", "fpl": 185, "amount": 56703},
+{"year": "2025-2026", "place": "HI", "household_size": 3, "income_frequency": "monthly", "fpl": 185, "amount": 4726},
+{"year": "2025-2026", "place": "HI", "household_size": 3, "income_frequency": "twice per month", "fpl": 185, "amount": 2363},
+{"year": "2025-2026", "place": "HI", "household_size": 3, "income_frequency": "every two weeks", "fpl": 185, "amount": 2181},
+{"year": "2025-2026", "place": "HI", "household_size": 3, "income_frequency": "weekly", "fpl": 185, "amount": 1091},
+{"year": "2025-2026", "place": "HI", "household_size": 3, "income_frequency": "annually", "fpl": 130, "amount": 39845},
+{"year": "2025-2026", "place": "HI", "household_size": 3, "income_frequency": "monthly", "fpl": 130, "amount": 3321},
+{"year": "2025-2026", "place": "HI", "household_size": 3, "income_frequency": "twice per month", "fpl": 130, "amount": 1661},
+{"year": "2025-2026", "place": "HI", "household_size": 3, "income_frequency": "every two weeks", "fpl": 130, "amount": 1533},
+{"year": "2025-2026", "place": "HI", "household_size": 3, "income_frequency": "weekly", "fpl": 130, "amount": 767},
+{"year": "2025-2026", "place": "HI", "household_size": 4, "income_frequency": "annually", "fpl": 185, "amount": 68413},
+{"year": "2025-2026", "place": "HI", "household_size": 4, "income_frequency": "monthly", "fpl": 185, "amount": 5702},
+{"year": "2025-2026", "place": "HI", "household_size": 4, "income_frequency": "twice per month", "fpl": 185, "amount": 2851},
+{"year": "2025-2026", "place": "HI", "household_size": 4, "income_frequency": "every two weeks", "fpl": 185, "amount": 2632},
+{"year": "2025-2026", "place": "HI", "household_size": 4, "income_frequency": "weekly", "fpl": 185, "amount": 1316},
+{"year": "2025-2026", "place": "HI", "household_size": 4, "income_frequency": "annually", "fpl": 130, "amount": 48074},
+{"year": "2025-2026", "place": "HI", "household_size": 4, "income_frequency": "monthly", "fpl": 130, "amount": 4007},
+{"year": "2025-2026", "place": "HI", "household_size": 4, "income_frequency": "twice per month", "fpl": 130, "amount": 2004},
+{"year": "2025-2026", "place": "HI", "household_size": 4, "income_frequency": "every two weeks", "fpl": 130, "amount": 1849},
+{"year": "2025-2026", "place": "HI", "household_size": 4, "income_frequency": "weekly", "fpl": 130, "amount": 925},
+{"year": "2025-2026", "place": "HI", "household_size": 5, "income_frequency": "annually", "fpl": 185, "amount": 80124},
+{"year": "2025-2026", "place": "HI", "household_size": 5, "income_frequency": "monthly", "fpl": 185, "amount": 6677},
+{"year": "2025-2026", "place": "HI", "household_size": 5, "income_frequency": "twice per month", "fpl": 185, "amount": 3339},
+{"year": "2025-2026", "place": "HI", "household_size": 5, "income_frequency": "every two weeks", "fpl": 185, "amount": 3082},
+{"year": "2025-2026", "place": "HI", "household_size": 5, "income_frequency": "weekly", "fpl": 185, "amount": 1541},
+{"year": "2025-2026", "place": "HI", "household_size": 5, "income_frequency": "annually", "fpl": 130, "amount": 56303},
+{"year": "2025-2026", "place": "HI", "household_size": 5, "income_frequency": "monthly", "fpl": 130, "amount": 4692},
+{"year": "2025-2026", "place": "HI", "household_size": 5, "income_frequency": "twice per month", "fpl": 130, "amount": 2346},
+{"year": "2025-2026", "place": "HI", "household_size": 5, "income_frequency": "every two weeks", "fpl": 130, "amount": 2166},
+{"year": "2025-2026", "place": "HI", "household_size": 5, "income_frequency": "weekly", "fpl": 130, "amount": 1083},
+{"year": "2025-2026", "place": "HI", "household_size": 6, "income_frequency": "annually", "fpl": 185, "amount": 91834},
+{"year": "2025-2026", "place": "HI", "household_size": 6, "income_frequency": "monthly", "fpl": 185, "amount": 7653},
+{"year": "2025-2026", "place": "HI", "household_size": 6, "income_frequency": "twice per month", "fpl": 185, "amount": 3827},
+{"year": "2025-2026", "place": "HI", "household_size": 6, "income_frequency": "every two weeks", "fpl": 185, "amount": 3533},
+{"year": "2025-2026", "place": "HI", "household_size": 6, "income_frequency": "weekly", "fpl": 185, "amount": 1767},
+{"year": "2025-2026", "place": "HI", "household_size": 6, "income_frequency": "annually", "fpl": 130, "amount": 64532},
+{"year": "2025-2026", "place": "HI", "household_size": 6, "income_frequency": "monthly", "fpl": 130, "amount": 5378},
+{"year": "2025-2026", "place": "HI", "household_size": 6, "income_frequency": "twice per month", "fpl": 130, "amount": 2689},
+{"year": "2025-2026", "place": "HI", "household_size": 6, "income_frequency": "every two weeks", "fpl": 130, "amount": 2482},
+{"year": "2025-2026", "place": "HI", "household_size": 6, "income_frequency": "weekly", "fpl": 130, "amount": 1241},
+{"year": "2025-2026", "place": "HI", "household_size": 7, "income_frequency": "annually", "fpl": 185, "amount": 103545},
+{"year": "2025-2026", "place": "HI", "household_size": 7, "income_frequency": "monthly", "fpl": 185, "amount": 8629},
+{"year": "2025-2026", "place": "HI", "household_size": 7, "income_frequency": "twice per month", "fpl": 185, "amount": 4315},
+{"year": "2025-2026", "place": "HI", "household_size": 7, "income_frequency": "every two weeks", "fpl": 185, "amount": 3983},
+{"year": "2025-2026", "place": "HI", "household_size": 7, "income_frequency": "weekly", "fpl": 185, "amount": 1992},
+{"year": "2025-2026", "place": "HI", "household_size": 7, "income_frequency": "annually", "fpl": 130, "amount": 72761},
+{"year": "2025-2026", "place": "HI", "household_size": 7, "income_frequency": "monthly", "fpl": 130, "amount": 6064},
+{"year": "2025-2026", "place": "HI", "household_size": 7, "income_frequency": "twice per month", "fpl": 130, "amount": 3032},
+{"year": "2025-2026", "place": "HI", "household_size": 7, "income_frequency": "every two weeks", "fpl": 130, "amount": 2799},
+{"year": "2025-2026", "place": "HI", "household_size": 7, "income_frequency": "weekly", "fpl": 130, "amount": 1400},
+{"year": "2025-2026", "place": "HI", "household_size": 8, "income_frequency": "annually", "fpl": 185, "amount": 115255},
+{"year": "2025-2026", "place": "HI", "household_size": 8, "income_frequency": "monthly", "fpl": 185, "amount": 9605},
+{"year": "2025-2026", "place": "HI", "household_size": 8, "income_frequency": "twice per month", "fpl": 185, "amount": 4803},
+{"year": "2025-2026", "place": "HI", "household_size": 8, "income_frequency": "every two weeks", "fpl": 185, "amount": 4433},
+{"year": "2025-2026", "place": "HI", "household_size": 8, "income_frequency": "weekly", "fpl": 185, "amount": 2217},
+{"year": "2025-2026", "place": "HI", "household_size": 8, "income_frequency": "annually", "fpl": 130, "amount": 80990},
+{"year": "2025-2026", "place": "HI", "household_size": 8, "income_frequency": "monthly", "fpl": 130, "amount": 6750},
+{"year": "2025-2026", "place": "HI", "household_size": 8, "income_frequency": "twice per month", "fpl": 130, "amount": 3375},
+{"year": "2025-2026", "place": "HI", "household_size": 8, "income_frequency": "every two weeks", "fpl": 130, "amount": 3115},
+{"year": "2025-2026", "place": "HI", "household_size": 8, "income_frequency": "weekly", "fpl": 130, "amount": 1558},
+{"year": "2025-2026", "place": "HI", "household_size": 9, "income_frequency": "annually", "fpl": 185, "amount": 126966},
+{"year": "2025-2026", "place": "HI", "household_size": 9, "income_frequency": "monthly", "fpl": 185, "amount": 10581},
+{"year": "2025-2026", "place": "HI", "household_size": 9, "income_frequency": "twice per month", "fpl": 185, "amount": 5291},
+{"year": "2025-2026", "place": "HI", "household_size": 9, "income_frequency": "every two weeks", "fpl": 185, "amount": 4884},
+{"year": "2025-2026", "place": "HI", "household_size": 9, "income_frequency": "weekly", "fpl": 185, "amount": 2443},
+{"year": "2025-2026", "place": "HI", "household_size": 9, "income_frequency": "annually", "fpl": 130, "amount": 89219},
+{"year": "2025-2026", "place": "HI", "household_size": 9, "income_frequency": "monthly", "fpl": 130, "amount": 7436},
+{"year": "2025-2026", "place": "HI", "household_size": 9, "income_frequency": "twice per month", "fpl": 130, "amount": 3718},
+{"year": "2025-2026", "place": "HI", "household_size": 9, "income_frequency": "every two weeks", "fpl": 130, "amount": 3432},
+{"year": "2025-2026", "place": "HI", "household_size": 9, "income_frequency": "weekly", "fpl": 130, "amount": 1717},
+{"year": "2025-2026", "place": "HI", "household_size": 10, "income_frequency": "annually", "fpl": 185, "amount": 138677},
+{"year": "2025-2026", "place": "HI", "household_size": 10, "income_frequency": "monthly", "fpl": 185, "amount": 11557},
+{"year": "2025-2026", "place": "HI", "household_size": 10, "income_frequency": "twice per month", "fpl": 185, "amount": 5779},
+{"year": "2025-2026", "place": "HI", "household_size": 10, "income_frequency": "every two weeks", "fpl": 185, "amount": 5335},
+{"year": "2025-2026", "place": "HI", "household_size": 10, "income_frequency": "weekly", "fpl": 185, "amount": 2669},
+{"year": "2025-2026", "place": "HI", "household_size": 10, "income_frequency": "annually", "fpl": 130, "amount": 97448},
+{"year": "2025-2026", "place": "HI", "household_size": 10, "income_frequency": "monthly", "fpl": 130, "amount": 8122},
+{"year": "2025-2026", "place": "HI", "household_size": 10, "income_frequency": "twice per month", "fpl": 130, "amount": 4061},
+{"year": "2025-2026", "place": "HI", "household_size": 10, "income_frequency": "every two weeks", "fpl": 130, "amount": 3749},
+{"year": "2025-2026", "place": "HI", "household_size": 10, "income_frequency": "weekly", "fpl": 130, "amount": 1876},
+{"year": "2025-2026", "place": "HI", "household_size": 11, "income_frequency": "annually", "fpl": 185, "amount": 150388},
+{"year": "2025-2026", "place": "HI", "household_size": 11, "income_frequency": "monthly", "fpl": 185, "amount": 12533},
+{"year": "2025-2026", "place": "HI", "household_size": 11, "income_frequency": "twice per month", "fpl": 185, "amount": 6267},
+{"year": "2025-2026", "place": "HI", "household_size": 11, "income_frequency": "every two weeks", "fpl": 185, "amount": 5786},
+{"year": "2025-2026", "place": "HI", "household_size": 11, "income_frequency": "weekly", "fpl": 185, "amount": 2895},
+{"year": "2025-2026", "place": "HI", "household_size": 11, "income_frequency": "annually", "fpl": 130, "amount": 105677},
+{"year": "2025-2026", "place": "HI", "household_size": 11, "income_frequency": "monthly", "fpl": 130, "amount": 8808},
+{"year": "2025-2026", "place": "HI", "household_size": 11, "income_frequency": "twice per month", "fpl": 130, "amount": 4404},
+{"year": "2025-2026", "place": "HI", "household_size": 11, "income_frequency": "every two weeks", "fpl": 130, "amount": 4066},
+{"year": "2025-2026", "place": "HI", "household_size": 11, "income_frequency": "weekly", "fpl": 130, "amount": 2035},
+{"year": "2025-2026", "place": "HI", "household_size": 12, "income_frequency": "annually", "fpl": 185, "amount": 162099},
+{"year": "2025-2026", "place": "HI", "household_size": 12, "income_frequency": "monthly", "fpl": 185, "amount": 13509},
+{"year": "2025-2026", "place": "HI", "household_size": 12, "income_frequency": "twice per month", "fpl": 185, "amount": 6755},
+{"year": "2025-2026", "place": "HI", "household_size": 12, "income_frequency": "every two weeks", "fpl": 185, "amount": 6237},
+{"year": "2025-2026", "place": "HI", "household_size": 12, "income_frequency": "weekly", "fpl": 185, "amount": 3121},
+{"year": "2025-2026", "place": "HI", "household_size": 12, "income_frequency": "annually", "fpl": 130, "amount": 113906},
+{"year": "2025-2026", "place": "HI", "household_size": 12, "income_frequency": "monthly", "fpl": 130, "amount": 9494},
+{"year": "2025-2026", "place": "HI", "household_size": 12, "income_frequency": "twice per month", "fpl": 130, "amount": 4747},
+{"year": "2025-2026", "place": "HI", "household_size": 12, "income_frequency": "every two weeks", "fpl": 130, "amount": 4383},
+{"year": "2025-2026", "place": "HI", "household_size": 12, "income_frequency": "weekly", "fpl": 130, "amount": 2194},
+{"year": "2025-2026", "place": "HI", "household_size": 13, "income_frequency": "annually", "fpl": 185, "amount": 173810},
+{"year": "2025-2026", "place": "HI", "household_size": 13, "income_frequency": "monthly", "fpl": 185, "amount": 14485},
+{"year": "2025-2026", "place": "HI", "household_size": 13, "income_frequency": "twice per month", "fpl": 185, "amount": 7243},
+{"year": "2025-2026", "place": "HI", "household_size": 13, "income_frequency": "every two weeks", "fpl": 185, "amount": 6688},
+{"year": "2025-2026", "place": "HI", "household_size": 13, "income_frequency": "weekly", "fpl": 185, "amount": 3347},
+{"year": "2025-2026", "place": "HI", "household_size": 13, "income_frequency": "annually", "fpl": 130, "amount": 122135},
+{"year": "2025-2026", "place": "HI", "household_size": 13, "income_frequency": "monthly", "fpl": 130, "amount": 10180},
+{"year": "2025-2026", "place": "HI", "household_size": 13, "income_frequency": "twice per month", "fpl": 130, "amount": 5090},
+{"year": "2025-2026", "place": "HI", "household_size": 13, "income_frequency": "every two weeks", "fpl": 130, "amount": 4700},
+{"year": "2025-2026", "place": "HI", "household_size": 13, "income_frequency": "weekly", "fpl": 130, "amount": 2353},
+{"year": "2025-2026", "place": "HI", "household_size": 14, "income_frequency": "annually", "fpl": 185, "amount": 185521},
+{"year": "2025-2026", "place": "HI", "household_size": 14, "income_frequency": "monthly", "fpl": 185, "amount": 15461},
+{"year": "2025-2026", "place": "HI", "household_size": 14, "income_frequency": "twice per month", "fpl": 185, "amount": 7731},
+{"year": "2025-2026", "place": "HI", "household_size": 14, "income_frequency": "every two weeks", "fpl": 185, "amount": 7139},
+{"year": "2025-2026", "place": "HI", "household_size": 14, "income_frequency": "weekly", "fpl": 185, "amount": 3573},
+{"year": "2025-2026", "place": "HI", "household_size": 14, "income_frequency": "annually", "fpl": 130, "amount": 130364},
+{"year": "2025-2026", "place": "HI", "household_size": 14, "income_frequency": "monthly", "fpl": 130, "amount": 10866},
+{"year": "2025-2026", "place": "HI", "household_size": 14, "income_frequency": "twice per month", "fpl": 130, "amount": 5433},
+{"year": "2025-2026", "place": "HI", "household_size": 14, "income_frequency": "every two weeks", "fpl": 130, "amount": 5017},
+{"year": "2025-2026", "place": "HI", "household_size": 14, "income_frequency": "weekly", "fpl": 130, "amount": 2512},
+{"year": "2025-2026", "place": "HI", "household_size": 15, "income_frequency": "annually", "fpl": 185, "amount": 197232},
+{"year": "2025-2026", "place": "HI", "household_size": 15, "income_frequency": "monthly", "fpl": 185, "amount": 16437},
+{"year": "2025-2026", "place": "HI", "household_size": 15, "income_frequency": "twice per month", "fpl": 185, "amount": 8219},
+{"year": "2025-2026", "place": "HI", "household_size": 15, "income_frequency": "every two weeks", "fpl": 185, "amount": 7590},
+{"year": "2025-2026", "place": "HI", "household_size": 15, "income_frequency": "weekly", "fpl": 185, "amount": 3799},
+{"year": "2025-2026", "place": "HI", "household_size": 15, "income_frequency": "annually", "fpl": 130, "amount": 138593},
+{"year": "2025-2026", "place": "HI", "household_size": 15, "income_frequency": "monthly", "fpl": 130, "amount": 11552},
+{"year": "2025-2026", "place": "HI", "household_size": 15, "income_frequency": "twice per month", "fpl": 130, "amount": 5776},
+{"year": "2025-2026", "place": "HI", "household_size": 15, "income_frequency": "every two weeks", "fpl": 130, "amount": 5334},
+{"year": "2025-2026", "place": "HI", "household_size": 15, "income_frequency": "weekly", "fpl": 130, "amount": 2671},
+{"year": "2025-2026", "place": "HI", "household_size": 16, "income_frequency": "annually", "fpl": 185, "amount": 208943},
+{"year": "2025-2026", "place": "HI", "household_size": 16, "income_frequency": "monthly", "fpl": 185, "amount": 17413},
+{"year": "2025-2026", "place": "HI", "household_size": 16, "income_frequency": "twice per month", "fpl": 185, "amount": 8707},
+{"year": "2025-2026", "place": "HI", "household_size": 16, "income_frequency": "every two weeks", "fpl": 185, "amount": 8041},
+{"year": "2025-2026", "place": "HI", "household_size": 16, "income_frequency": "weekly", "fpl": 185, "amount": 4025},
+{"year": "2025-2026", "place": "HI", "household_size": 16, "income_frequency": "annually", "fpl": 130, "amount": 146822},
+{"year": "2025-2026", "place": "HI", "household_size": 16, "income_frequency": "monthly", "fpl": 130, "amount": 12238},
+{"year": "2025-2026", "place": "HI", "household_size": 16, "income_frequency": "twice per month", "fpl": 130, "amount": 6119},
+{"year": "2025-2026", "place": "HI", "household_size": 16, "income_frequency": "every two weeks", "fpl": 130, "amount": 5651},
+{"year": "2025-2026", "place": "HI", "household_size": 16, "income_frequency": "weekly", "fpl": 130, "amount": 2830},
+{"year": "2025-2026", "place": "HI", "household_size": 17, "income_frequency": "annually", "fpl": 185, "amount": 220654},
+{"year": "2025-2026", "place": "HI", "household_size": 17, "income_frequency": "monthly", "fpl": 185, "amount": 18389},
+{"year": "2025-2026", "place": "HI", "household_size": 17, "income_frequency": "twice per month", "fpl": 185, "amount": 9195},
+{"year": "2025-2026", "place": "HI", "household_size": 17, "income_frequency": "every two weeks", "fpl": 185, "amount": 8492},
+{"year": "2025-2026", "place": "HI", "household_size": 17, "income_frequency": "weekly", "fpl": 185, "amount": 4251},
+{"year": "2025-2026", "place": "HI", "household_size": 17, "income_frequency": "annually", "fpl": 130, "amount": 155051},
+{"year": "2025-2026", "place": "HI", "household_size": 17, "income_frequency": "monthly", "fpl": 130, "amount": 12924},
+{"year": "2025-2026", "place": "HI", "household_size": 17, "income_frequency": "twice per month", "fpl": 130, "amount": 6462},
+{"year": "2025-2026", "place": "HI", "household_size": 17, "income_frequency": "every two weeks", "fpl": 130, "amount": 5968},
+{"year": "2025-2026", "place": "HI", "household_size": 17, "income_frequency": "weekly", "fpl": 130, "amount": 2989},
+{"year": "2025-2026", "place": "HI", "household_size": 18, "income_frequency": "annually", "fpl": 185, "amount": 232365},
+{"year": "2025-2026", "place": "HI", "household_size": 18, "income_frequency": "monthly", "fpl": 185, "amount": 19365},
+{"year": "2025-2026", "place": "HI", "household_size": 18, "income_frequency": "twice per month", "fpl": 185, "amount": 9683},
+{"year": "2025-2026", "place": "HI", "household_size": 18, "income_frequency": "every two weeks", "fpl": 185, "amount": 8943},
+{"year": "2025-2026", "place": "HI", "household_size": 18, "income_frequency": "weekly", "fpl": 185, "amount": 4477},
+{"year": "2025-2026", "place": "HI", "household_size": 18, "income_frequency": "annually", "fpl": 130, "amount": 163280},
+{"year": "2025-2026", "place": "HI", "household_size": 18, "income_frequency": "monthly", "fpl": 130, "amount": 13610},
+{"year": "2025-2026", "place": "HI", "household_size": 18, "income_frequency": "twice per month", "fpl": 130, "amount": 6805},
+{"year": "2025-2026", "place": "HI", "household_size": 18, "income_frequency": "every two weeks", "fpl": 130, "amount": 6285},
+{"year": "2025-2026", "place": "HI", "household_size": 18, "income_frequency": "weekly", "fpl": 130, "amount": 3148},
+{"year": "2025-2026", "place": "HI", "household_size": 19, "income_frequency": "annually", "fpl": 185, "amount": 244076},
+{"year": "2025-2026", "place": "HI", "household_size": 19, "income_frequency": "monthly", "fpl": 185, "amount": 20341},
+{"year": "2025-2026", "place": "HI", "household_size": 19, "income_frequency": "twice per month", "fpl": 185, "amount": 10171},
+{"year": "2025-2026", "place": "HI", "household_size": 19, "income_frequency": "every two weeks", "fpl": 185, "amount": 9394},
+{"year": "2025-2026", "place": "HI", "household_size": 19, "income_frequency": "weekly", "fpl": 185, "amount": 4703},
+{"year": "2025-2026", "place": "HI", "household_size": 19, "income_frequency": "annually", "fpl": 130, "amount": 171509},
+{"year": "2025-2026", "place": "HI", "household_size": 19, "income_frequency": "monthly", "fpl": 130, "amount": 14296},
+{"year": "2025-2026", "place": "HI", "household_size": 19, "income_frequency": "twice per month", "fpl": 130, "amount": 7148},
+{"year": "2025-2026", "place": "HI", "household_size": 19, "income_frequency": "every two weeks", "fpl": 130, "amount": 6602},
+{"year": "2025-2026", "place": "HI", "household_size": 19, "income_frequency": "weekly", "fpl": 130, "amount": 3307},
+{"year": "2025-2026", "place": "HI", "household_size": 20, "income_frequency": "annually", "fpl": 185, "amount": 255787},
+{"year": "2025-2026", "place": "HI", "household_size": 20, "income_frequency": "monthly", "fpl": 185, "amount": 21317},
+{"year": "2025-2026", "place": "HI", "household_size": 20, "income_frequency": "twice per month", "fpl": 185, "amount": 10659},
+{"year": "2025-2026", "place": "HI", "household_size": 20, "income_frequency": "every two weeks", "fpl": 185, "amount": 9845},
+{"year": "2025-2026", "place": "HI", "household_size": 20, "income_frequency": "weekly", "fpl": 185, "amount": 4929},
+{"year": "2025-2026", "place": "HI", "household_size": 20, "income_frequency": "annually", "fpl": 130, "amount": 179738},
+{"year": "2025-2026", "place": "HI", "household_size": 20, "income_frequency": "monthly", "fpl": 130, "amount": 14982},
+{"year": "2025-2026", "place": "HI", "household_size": 20, "income_frequency": "twice per month", "fpl": 130, "amount": 7491},
+{"year": "2025-2026", "place": "HI", "household_size": 20, "income_frequency": "every two weeks", "fpl": 130, "amount": 6919},
+{"year": "2025-2026", "place": "HI", "household_size": 20, "income_frequency": "weekly", "fpl": 130, "amount": 3466},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "annually", "fpl": 185, "amount": 10175},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "monthly", "fpl": 185, "amount": 848},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "twice per month", "fpl": 185, "amount": 424},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 185, "amount": 392},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "weekly", "fpl": 185, "amount": 196},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "annually", "fpl": 130, "amount": 7150},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "monthly", "fpl": 130, "amount": 596},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "twice per month", "fpl": 130, "amount": 298},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 130, "amount": 275},
+{"year": "2025-2026", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "weekly", "fpl": 130, "amount": 138},
+{"year": "2025-2026", "place": "AK", "household_size": "additional", "income_frequency": "annually", "fpl": 185, "amount": 12728},
+{"year": "2025-2026", "place": "AK", "household_size": "additional", "income_frequency": "monthly", "fpl": 185, "amount": 1061},
+{"year": "2025-2026", "place": "AK", "household_size": "additional", "income_frequency": "twice per month", "fpl": 185, "amount": 531},
+{"year": "2025-2026", "place": "AK", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 185, "amount": 490},
+{"year": "2025-2026", "place": "AK", "household_size": "additional", "income_frequency": "weekly", "fpl": 185, "amount": 245},
+{"year": "2025-2026", "place": "AK", "household_size": "additional", "income_frequency": "annually", "fpl": 130, "amount": 8944},
+{"year": "2025-2026", "place": "AK", "household_size": "additional", "income_frequency": "monthly", "fpl": 130, "amount": 746},
+{"year": "2025-2026", "place": "AK", "household_size": "additional", "income_frequency": "twice per month", "fpl": 130, "amount": 373},
+{"year": "2025-2026", "place": "AK", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 130, "amount": 344},
+{"year": "2025-2026", "place": "AK", "household_size": "additional", "income_frequency": "weekly", "fpl": 130, "amount": 172},
+{"year": "2025-2026", "place": "HI", "household_size": "additional", "income_frequency": "annually", "fpl": 185, "amount": 11711},
+{"year": "2025-2026", "place": "HI", "household_size": "additional", "income_frequency": "monthly", "fpl": 185, "amount": 976},
+{"year": "2025-2026", "place": "HI", "household_size": "additional", "income_frequency": "twice per month", "fpl": 185, "amount": 488},
+{"year": "2025-2026", "place": "HI", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 185, "amount": 451},
+{"year": "2025-2026", "place": "HI", "household_size": "additional", "income_frequency": "weekly", "fpl": 185, "amount": 226},
+{"year": "2025-2026", "place": "HI", "household_size": "additional", "income_frequency": "annually", "fpl": 130, "amount": 8229},
+{"year": "2025-2026", "place": "HI", "household_size": "additional", "income_frequency": "monthly", "fpl": 130, "amount": 686},
+{"year": "2025-2026", "place": "HI", "household_size": "additional", "income_frequency": "twice per month", "fpl": 130, "amount": 343},
+{"year": "2025-2026", "place": "HI", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 130, "amount": 317},
+{"year": "2025-2026", "place": "HI", "household_size": "additional", "income_frequency": "weekly", "fpl": 130, "amount": 159},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "annually", "fpl": 185, "amount": 27861},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "monthly", "fpl": 185, "amount": 2322},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "twice per month", "fpl": 185, "amount": 1161},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "every two weeks", "fpl": 185, "amount": 1072},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "weekly", "fpl": 185, "amount": 536},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "annually", "fpl": 130, "amount": 19578},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "monthly", "fpl": 130, "amount": 1632},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "twice per month", "fpl": 130, "amount": 816},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "every two weeks", "fpl": 130, "amount": 753},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 1, "income_frequency": "weekly", "fpl": 130, "amount": 377},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "annually", "fpl": 185, "amount": 37814},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "monthly", "fpl": 185, "amount": 3152},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "twice per month", "fpl": 185, "amount": 1576},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "every two weeks", "fpl": 185, "amount": 1455},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "weekly", "fpl": 185, "amount": 728},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "annually", "fpl": 130, "amount": 26572},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "monthly", "fpl": 130, "amount": 2215},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "twice per month", "fpl": 130, "amount": 1108},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "every two weeks", "fpl": 130, "amount": 1022},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 2, "income_frequency": "weekly", "fpl": 130, "amount": 511},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "annually", "fpl": 185, "amount": 47767},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "monthly", "fpl": 185, "amount": 3981},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "twice per month", "fpl": 185, "amount": 1991},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "every two weeks", "fpl": 185, "amount": 1838},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "weekly", "fpl": 185, "amount": 919},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "annually", "fpl": 130, "amount": 33566},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "monthly", "fpl": 130, "amount": 2798},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "twice per month", "fpl": 130, "amount": 1399},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "every two weeks", "fpl": 130, "amount": 1291},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 3, "income_frequency": "weekly", "fpl": 130, "amount": 646},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "annually", "fpl": 185, "amount": 57720},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "monthly", "fpl": 185, "amount": 4810},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "twice per month", "fpl": 185, "amount": 2405},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "every two weeks", "fpl": 185, "amount": 2220},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "weekly", "fpl": 185, "amount": 1110},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "annually", "fpl": 130, "amount": 40560},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "monthly", "fpl": 130, "amount": 3380},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "twice per month", "fpl": 130, "amount": 1690},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "every two weeks", "fpl": 130, "amount": 1560},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 4, "income_frequency": "weekly", "fpl": 130, "amount": 780},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "annually", "fpl": 185, "amount": 67673},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "monthly", "fpl": 185, "amount": 5640},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "twice per month", "fpl": 185, "amount": 2820},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "every two weeks", "fpl": 185, "amount": 2603},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "weekly", "fpl": 185, "amount": 1302},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "annually", "fpl": 130, "amount": 47554},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "monthly", "fpl": 130, "amount": 3963},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "twice per month", "fpl": 130, "amount": 1982},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "every two weeks", "fpl": 130, "amount": 1829},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 5, "income_frequency": "weekly", "fpl": 130, "amount": 915},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "annually", "fpl": 185, "amount": 77626},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "monthly", "fpl": 185, "amount": 6469},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "twice per month", "fpl": 185, "amount": 3235},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "every two weeks", "fpl": 185, "amount": 2986},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "weekly", "fpl": 185, "amount": 1493},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "annually", "fpl": 130, "amount": 54548},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "monthly", "fpl": 130, "amount": 4546},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "twice per month", "fpl": 130, "amount": 2273},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "every two weeks", "fpl": 130, "amount": 2098},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 6, "income_frequency": "weekly", "fpl": 130, "amount": 1049},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "annually", "fpl": 185, "amount": 87579},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "monthly", "fpl": 185, "amount": 7299},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "twice per month", "fpl": 185, "amount": 3650},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "every two weeks", "fpl": 185, "amount": 3369},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "weekly", "fpl": 185, "amount": 1685},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "annually", "fpl": 130, "amount": 61542},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "monthly", "fpl": 130, "amount": 5129},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "twice per month", "fpl": 130, "amount": 2565},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "every two weeks", "fpl": 130, "amount": 2367},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 7, "income_frequency": "weekly", "fpl": 130, "amount": 1184},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "annually", "fpl": 185, "amount": 97532},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "monthly", "fpl": 185, "amount": 8128},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "twice per month", "fpl": 185, "amount": 4064},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "every two weeks", "fpl": 185, "amount": 3752},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "weekly", "fpl": 185, "amount": 1876},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "annually", "fpl": 130, "amount": 68536},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "monthly", "fpl": 130, "amount": 5712},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "twice per month", "fpl": 130, "amount": 2856},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "every two weeks", "fpl": 130, "amount": 2636},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 8, "income_frequency": "weekly", "fpl": 130, "amount": 1318},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "annually", "fpl": 185, "amount": 107485},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "monthly", "fpl": 185, "amount": 8958},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "twice per month", "fpl": 185, "amount": 4479},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "every two weeks", "fpl": 185, "amount": 4135},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "weekly", "fpl": 185, "amount": 2068},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "annually", "fpl": 130, "amount": 75530},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "monthly", "fpl": 130, "amount": 6295},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "twice per month", "fpl": 130, "amount": 3148},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "every two weeks", "fpl": 130, "amount": 2905},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 9, "income_frequency": "weekly", "fpl": 130, "amount": 1453},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "annually", "fpl": 185, "amount": 117438},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "monthly", "fpl": 185, "amount": 9788},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "twice per month", "fpl": 185, "amount": 4894},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "every two weeks", "fpl": 185, "amount": 4518},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "weekly", "fpl": 185, "amount": 2260},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "annually", "fpl": 130, "amount": 82524},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "monthly", "fpl": 130, "amount": 6878},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "twice per month", "fpl": 130, "amount": 3440},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "every two weeks", "fpl": 130, "amount": 3174},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 10, "income_frequency": "weekly", "fpl": 130, "amount": 1588},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "annually", "fpl": 185, "amount": 127391},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "monthly", "fpl": 185, "amount": 10618},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "twice per month", "fpl": 185, "amount": 5309},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "every two weeks", "fpl": 185, "amount": 4901},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "weekly", "fpl": 185, "amount": 2452},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "annually", "fpl": 130, "amount": 89518},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "monthly", "fpl": 130, "amount": 7461},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "twice per month", "fpl": 130, "amount": 3732},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "every two weeks", "fpl": 130, "amount": 3443},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 11, "income_frequency": "weekly", "fpl": 130, "amount": 1723},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "annually", "fpl": 185, "amount": 137344},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "monthly", "fpl": 185, "amount": 11448},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "twice per month", "fpl": 185, "amount": 5724},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "every two weeks", "fpl": 185, "amount": 5284},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "weekly", "fpl": 185, "amount": 2644},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "annually", "fpl": 130, "amount": 96512},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "monthly", "fpl": 130, "amount": 8044},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "twice per month", "fpl": 130, "amount": 4024},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "every two weeks", "fpl": 130, "amount": 3712},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 12, "income_frequency": "weekly", "fpl": 130, "amount": 1858},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "annually", "fpl": 185, "amount": 147297},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "monthly", "fpl": 185, "amount": 12278},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "twice per month", "fpl": 185, "amount": 6139},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "every two weeks", "fpl": 185, "amount": 5667},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "weekly", "fpl": 185, "amount": 2836},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "annually", "fpl": 130, "amount": 103506},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "monthly", "fpl": 130, "amount": 8627},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "twice per month", "fpl": 130, "amount": 4316},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "every two weeks", "fpl": 130, "amount": 3981},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 13, "income_frequency": "weekly", "fpl": 130, "amount": 1993},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "annually", "fpl": 185, "amount": 157250},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "monthly", "fpl": 185, "amount": 13108},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "twice per month", "fpl": 185, "amount": 6554},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "every two weeks", "fpl": 185, "amount": 6050},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "weekly", "fpl": 185, "amount": 3028},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "annually", "fpl": 130, "amount": 110500},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "monthly", "fpl": 130, "amount": 9210},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "twice per month", "fpl": 130, "amount": 4608},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "every two weeks", "fpl": 130, "amount": 4250},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 14, "income_frequency": "weekly", "fpl": 130, "amount": 2128},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "annually", "fpl": 185, "amount": 167203},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "monthly", "fpl": 185, "amount": 13938},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "twice per month", "fpl": 185, "amount": 6969},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "every two weeks", "fpl": 185, "amount": 6433},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "weekly", "fpl": 185, "amount": 3220},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "annually", "fpl": 130, "amount": 117494},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "monthly", "fpl": 130, "amount": 9793},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "twice per month", "fpl": 130, "amount": 4900},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "every two weeks", "fpl": 130, "amount": 4519},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 15, "income_frequency": "weekly", "fpl": 130, "amount": 2263},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "annually", "fpl": 185, "amount": 177156},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "monthly", "fpl": 185, "amount": 14768},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "twice per month", "fpl": 185, "amount": 7384},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "every two weeks", "fpl": 185, "amount": 6816},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "weekly", "fpl": 185, "amount": 3412},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "annually", "fpl": 130, "amount": 124488},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "monthly", "fpl": 130, "amount": 10376},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "twice per month", "fpl": 130, "amount": 5192},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "every two weeks", "fpl": 130, "amount": 4788},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 16, "income_frequency": "weekly", "fpl": 130, "amount": 2398},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "annually", "fpl": 185, "amount": 187109},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "monthly", "fpl": 185, "amount": 15598},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "twice per month", "fpl": 185, "amount": 7799},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "every two weeks", "fpl": 185, "amount": 7199},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "weekly", "fpl": 185, "amount": 3604},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "annually", "fpl": 130, "amount": 131482},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "monthly", "fpl": 130, "amount": 10959},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "twice per month", "fpl": 130, "amount": 5484},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "every two weeks", "fpl": 130, "amount": 5057},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 17, "income_frequency": "weekly", "fpl": 130, "amount": 2533},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "annually", "fpl": 185, "amount": 197062},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "monthly", "fpl": 185, "amount": 16428},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "twice per month", "fpl": 185, "amount": 8214},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "every two weeks", "fpl": 185, "amount": 7582},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "weekly", "fpl": 185, "amount": 3796},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "annually", "fpl": 130, "amount": 138476},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "monthly", "fpl": 130, "amount": 11542},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "twice per month", "fpl": 130, "amount": 5776},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "every two weeks", "fpl": 130, "amount": 5326},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 18, "income_frequency": "weekly", "fpl": 130, "amount": 2668},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "annually", "fpl": 185, "amount": 207015},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "monthly", "fpl": 185, "amount": 17258},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "twice per month", "fpl": 185, "amount": 8629},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "every two weeks", "fpl": 185, "amount": 7965},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "weekly", "fpl": 185, "amount": 3988},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "annually", "fpl": 130, "amount": 145470},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "monthly", "fpl": 130, "amount": 12125},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "twice per month", "fpl": 130, "amount": 6068},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "every two weeks", "fpl": 130, "amount": 5595},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 19, "income_frequency": "weekly", "fpl": 130, "amount": 2803},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "annually", "fpl": 185, "amount": 216968},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "monthly", "fpl": 185, "amount": 18088},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "twice per month", "fpl": 185, "amount": 9044},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "every two weeks", "fpl": 185, "amount": 8348},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "weekly", "fpl": 185, "amount": 4180},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "annually", "fpl": 130, "amount": 152464},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "monthly", "fpl": 130, "amount": 12708},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "twice per month", "fpl": 130, "amount": 6360},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "every two weeks", "fpl": 130, "amount": 5864},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": 20, "income_frequency": "weekly", "fpl": 130, "amount": 2938},
+{"year": "2024-2025", "place": "AK", "household_size": 1, "income_frequency": "annually", "fpl": 185, "amount": 34799},
+{"year": "2024-2025", "place": "AK", "household_size": 1, "income_frequency": "monthly", "fpl": 185, "amount": 2900},
+{"year": "2024-2025", "place": "AK", "household_size": 1, "income_frequency": "twice per month", "fpl": 185, "amount": 1450},
+{"year": "2024-2025", "place": "AK", "household_size": 1, "income_frequency": "every two weeks", "fpl": 185, "amount": 1339},
+{"year": "2024-2025", "place": "AK", "household_size": 1, "income_frequency": "weekly", "fpl": 185, "amount": 670},
+{"year": "2024-2025", "place": "AK", "household_size": 1, "income_frequency": "annually", "fpl": 130, "amount": 24453},
+{"year": "2024-2025", "place": "AK", "household_size": 1, "income_frequency": "monthly", "fpl": 130, "amount": 2038},
+{"year": "2024-2025", "place": "AK", "household_size": 1, "income_frequency": "twice per month", "fpl": 130, "amount": 1019},
+{"year": "2024-2025", "place": "AK", "household_size": 1, "income_frequency": "every two weeks", "fpl": 130, "amount": 941},
+{"year": "2024-2025", "place": "AK", "household_size": 1, "income_frequency": "weekly", "fpl": 130, "amount": 471},
+{"year": "2024-2025", "place": "AK", "household_size": 2, "income_frequency": "annually", "fpl": 185, "amount": 47249},
+{"year": "2024-2025", "place": "AK", "household_size": 2, "income_frequency": "monthly", "fpl": 185, "amount": 3938},
+{"year": "2024-2025", "place": "AK", "household_size": 2, "income_frequency": "twice per month", "fpl": 185, "amount": 1969},
+{"year": "2024-2025", "place": "AK", "household_size": 2, "income_frequency": "every two weeks", "fpl": 185, "amount": 1818},
+{"year": "2024-2025", "place": "AK", "household_size": 2, "income_frequency": "weekly", "fpl": 185, "amount": 909},
+{"year": "2024-2025", "place": "AK", "household_size": 2, "income_frequency": "annually", "fpl": 130, "amount": 33202},
+{"year": "2024-2025", "place": "AK", "household_size": 2, "income_frequency": "monthly", "fpl": 130, "amount": 2767},
+{"year": "2024-2025", "place": "AK", "household_size": 2, "income_frequency": "twice per month", "fpl": 130, "amount": 1384},
+{"year": "2024-2025", "place": "AK", "household_size": 2, "income_frequency": "every two weeks", "fpl": 130, "amount": 1277},
+{"year": "2024-2025", "place": "AK", "household_size": 2, "income_frequency": "weekly", "fpl": 130, "amount": 639},
+{"year": "2024-2025", "place": "AK", "household_size": 3, "income_frequency": "annually", "fpl": 185, "amount": 59700},
+{"year": "2024-2025", "place": "AK", "household_size": 3, "income_frequency": "monthly", "fpl": 185, "amount": 4975},
+{"year": "2024-2025", "place": "AK", "household_size": 3, "income_frequency": "twice per month", "fpl": 185, "amount": 2488},
+{"year": "2024-2025", "place": "AK", "household_size": 3, "income_frequency": "every two weeks", "fpl": 185, "amount": 2297},
+{"year": "2024-2025", "place": "AK", "household_size": 3, "income_frequency": "weekly", "fpl": 185, "amount": 1149},
+{"year": "2024-2025", "place": "AK", "household_size": 3, "income_frequency": "annually", "fpl": 130, "amount": 41951},
+{"year": "2024-2025", "place": "AK", "household_size": 3, "income_frequency": "monthly", "fpl": 130, "amount": 3496},
+{"year": "2024-2025", "place": "AK", "household_size": 3, "income_frequency": "twice per month", "fpl": 130, "amount": 1748},
+{"year": "2024-2025", "place": "AK", "household_size": 3, "income_frequency": "every two weeks", "fpl": 130, "amount": 1614},
+{"year": "2024-2025", "place": "AK", "household_size": 3, "income_frequency": "weekly", "fpl": 130, "amount": 807},
+{"year": "2024-2025", "place": "AK", "household_size": 4, "income_frequency": "annually", "fpl": 185, "amount": 72150},
+{"year": "2024-2025", "place": "AK", "household_size": 4, "income_frequency": "monthly", "fpl": 185, "amount": 6013},
+{"year": "2024-2025", "place": "AK", "household_size": 4, "income_frequency": "twice per month", "fpl": 185, "amount": 3007},
+{"year": "2024-2025", "place": "AK", "household_size": 4, "income_frequency": "every two weeks", "fpl": 185, "amount": 2775},
+{"year": "2024-2025", "place": "AK", "household_size": 4, "income_frequency": "weekly", "fpl": 185, "amount": 1388},
+{"year": "2024-2025", "place": "AK", "household_size": 4, "income_frequency": "annually", "fpl": 130, "amount": 50700},
+{"year": "2024-2025", "place": "AK", "household_size": 4, "income_frequency": "monthly", "fpl": 130, "amount": 4225},
+{"year": "2024-2025", "place": "AK", "household_size": 4, "income_frequency": "twice per month", "fpl": 130, "amount": 2113},
+{"year": "2024-2025", "place": "AK", "household_size": 4, "income_frequency": "every two weeks", "fpl": 130, "amount": 1950},
+{"year": "2024-2025", "place": "AK", "household_size": 4, "income_frequency": "weekly", "fpl": 130, "amount": 975},
+{"year": "2024-2025", "place": "AK", "household_size": 5, "income_frequency": "annually", "fpl": 185, "amount": 84601},
+{"year": "2024-2025", "place": "AK", "household_size": 5, "income_frequency": "monthly", "fpl": 185, "amount": 7051},
+{"year": "2024-2025", "place": "AK", "household_size": 5, "income_frequency": "twice per month", "fpl": 185, "amount": 3526},
+{"year": "2024-2025", "place": "AK", "household_size": 5, "income_frequency": "every two weeks", "fpl": 185, "amount": 3254},
+{"year": "2024-2025", "place": "AK", "household_size": 5, "income_frequency": "weekly", "fpl": 185, "amount": 1627},
+{"year": "2024-2025", "place": "AK", "household_size": 5, "income_frequency": "annually", "fpl": 130, "amount": 59449},
+{"year": "2024-2025", "place": "AK", "household_size": 5, "income_frequency": "monthly", "fpl": 130, "amount": 4955},
+{"year": "2024-2025", "place": "AK", "household_size": 5, "income_frequency": "twice per month", "fpl": 130, "amount": 2478},
+{"year": "2024-2025", "place": "AK", "household_size": 5, "income_frequency": "every two weeks", "fpl": 130, "amount": 2287},
+{"year": "2024-2025", "place": "AK", "household_size": 5, "income_frequency": "weekly", "fpl": 130, "amount": 1144},
+{"year": "2024-2025", "place": "AK", "household_size": 6, "income_frequency": "annually", "fpl": 185, "amount": 97051},
+{"year": "2024-2025", "place": "AK", "household_size": 6, "income_frequency": "monthly", "fpl": 185, "amount": 8088},
+{"year": "2024-2025", "place": "AK", "household_size": 6, "income_frequency": "twice per month", "fpl": 185, "amount": 4044},
+{"year": "2024-2025", "place": "AK", "household_size": 6, "income_frequency": "every two weeks", "fpl": 185, "amount": 3733},
+{"year": "2024-2025", "place": "AK", "household_size": 6, "income_frequency": "weekly", "fpl": 185, "amount": 1867},
+{"year": "2024-2025", "place": "AK", "household_size": 6, "income_frequency": "annually", "fpl": 130, "amount": 68198},
+{"year": "2024-2025", "place": "AK", "household_size": 6, "income_frequency": "monthly", "fpl": 130, "amount": 5684},
+{"year": "2024-2025", "place": "AK", "household_size": 6, "income_frequency": "twice per month", "fpl": 130, "amount": 2842},
+{"year": "2024-2025", "place": "AK", "household_size": 6, "income_frequency": "every two weeks", "fpl": 130, "amount": 2623},
+{"year": "2024-2025", "place": "AK", "household_size": 6, "income_frequency": "weekly", "fpl": 130, "amount": 1312},
+{"year": "2024-2025", "place": "AK", "household_size": 7, "income_frequency": "annually", "fpl": 185, "amount": 109502},
+{"year": "2024-2025", "place": "AK", "household_size": 7, "income_frequency": "monthly", "fpl": 185, "amount": 9126},
+{"year": "2024-2025", "place": "AK", "household_size": 7, "income_frequency": "twice per month", "fpl": 185, "amount": 4563},
+{"year": "2024-2025", "place": "AK", "household_size": 7, "income_frequency": "every two weeks", "fpl": 185, "amount": 4212},
+{"year": "2024-2025", "place": "AK", "household_size": 7, "income_frequency": "weekly", "fpl": 185, "amount": 2106},
+{"year": "2024-2025", "place": "AK", "household_size": 7, "income_frequency": "annually", "fpl": 130, "amount": 76947},
+{"year": "2024-2025", "place": "AK", "household_size": 7, "income_frequency": "monthly", "fpl": 130, "amount": 6413},
+{"year": "2024-2025", "place": "AK", "household_size": 7, "income_frequency": "twice per month", "fpl": 130, "amount": 3207},
+{"year": "2024-2025", "place": "AK", "household_size": 7, "income_frequency": "every two weeks", "fpl": 130, "amount": 2960},
+{"year": "2024-2025", "place": "AK", "household_size": 7, "income_frequency": "weekly", "fpl": 130, "amount": 1480},
+{"year": "2024-2025", "place": "AK", "household_size": 8, "income_frequency": "annually", "fpl": 185, "amount": 121952},
+{"year": "2024-2025", "place": "AK", "household_size": 8, "income_frequency": "monthly", "fpl": 185, "amount": 10163},
+{"year": "2024-2025", "place": "AK", "household_size": 8, "income_frequency": "twice per month", "fpl": 185, "amount": 5082},
+{"year": "2024-2025", "place": "AK", "household_size": 8, "income_frequency": "every two weeks", "fpl": 185, "amount": 4691},
+{"year": "2024-2025", "place": "AK", "household_size": 8, "income_frequency": "weekly", "fpl": 185, "amount": 2346},
+{"year": "2024-2025", "place": "AK", "household_size": 8, "income_frequency": "annually", "fpl": 130, "amount": 85696},
+{"year": "2024-2025", "place": "AK", "household_size": 8, "income_frequency": "monthly", "fpl": 130, "amount": 7142},
+{"year": "2024-2025", "place": "AK", "household_size": 8, "income_frequency": "twice per month", "fpl": 130, "amount": 3571},
+{"year": "2024-2025", "place": "AK", "household_size": 8, "income_frequency": "every two weeks", "fpl": 130, "amount": 3296},
+{"year": "2024-2025", "place": "AK", "household_size": 8, "income_frequency": "weekly", "fpl": 130, "amount": 1648},
+{"year": "2024-2025", "place": "AK", "household_size": 9, "income_frequency": "annually", "fpl": 185, "amount": 134403},
+{"year": "2024-2025", "place": "AK", "household_size": 9, "income_frequency": "monthly", "fpl": 185, "amount": 11201},
+{"year": "2024-2025", "place": "AK", "household_size": 9, "income_frequency": "twice per month", "fpl": 185, "amount": 5601},
+{"year": "2024-2025", "place": "AK", "household_size": 9, "income_frequency": "every two weeks", "fpl": 185, "amount": 5170},
+{"year": "2024-2025", "place": "AK", "household_size": 9, "income_frequency": "weekly", "fpl": 185, "amount": 2586},
+{"year": "2024-2025", "place": "AK", "household_size": 9, "income_frequency": "annually", "fpl": 130, "amount": 94445},
+{"year": "2024-2025", "place": "AK", "household_size": 9, "income_frequency": "monthly", "fpl": 130, "amount": 7872},
+{"year": "2024-2025", "place": "AK", "household_size": 9, "income_frequency": "twice per month", "fpl": 130, "amount": 3936},
+{"year": "2024-2025", "place": "AK", "household_size": 9, "income_frequency": "every two weeks", "fpl": 130, "amount": 3633},
+{"year": "2024-2025", "place": "AK", "household_size": 9, "income_frequency": "weekly", "fpl": 130, "amount": 1817},
+{"year": "2024-2025", "place": "AK", "household_size": 10, "income_frequency": "annually", "fpl": 185, "amount": 146854},
+{"year": "2024-2025", "place": "AK", "household_size": 10, "income_frequency": "monthly", "fpl": 185, "amount": 12239},
+{"year": "2024-2025", "place": "AK", "household_size": 10, "income_frequency": "twice per month", "fpl": 185, "amount": 6120},
+{"year": "2024-2025", "place": "AK", "household_size": 10, "income_frequency": "every two weeks", "fpl": 185, "amount": 5649},
+{"year": "2024-2025", "place": "AK", "household_size": 10, "income_frequency": "weekly", "fpl": 185, "amount": 2826},
+{"year": "2024-2025", "place": "AK", "household_size": 10, "income_frequency": "annually", "fpl": 130, "amount": 103194},
+{"year": "2024-2025", "place": "AK", "household_size": 10, "income_frequency": "monthly", "fpl": 130, "amount": 8602},
+{"year": "2024-2025", "place": "AK", "household_size": 10, "income_frequency": "twice per month", "fpl": 130, "amount": 4301},
+{"year": "2024-2025", "place": "AK", "household_size": 10, "income_frequency": "every two weeks", "fpl": 130, "amount": 3970},
+{"year": "2024-2025", "place": "AK", "household_size": 10, "income_frequency": "weekly", "fpl": 130, "amount": 1986},
+{"year": "2024-2025", "place": "AK", "household_size": 11, "income_frequency": "annually", "fpl": 185, "amount": 159305},
+{"year": "2024-2025", "place": "AK", "household_size": 11, "income_frequency": "monthly", "fpl": 185, "amount": 13277},
+{"year": "2024-2025", "place": "AK", "household_size": 11, "income_frequency": "twice per month", "fpl": 185, "amount": 6639},
+{"year": "2024-2025", "place": "AK", "household_size": 11, "income_frequency": "every two weeks", "fpl": 185, "amount": 6128},
+{"year": "2024-2025", "place": "AK", "household_size": 11, "income_frequency": "weekly", "fpl": 185, "amount": 3066},
+{"year": "2024-2025", "place": "AK", "household_size": 11, "income_frequency": "annually", "fpl": 130, "amount": 111943},
+{"year": "2024-2025", "place": "AK", "household_size": 11, "income_frequency": "monthly", "fpl": 130, "amount": 9332},
+{"year": "2024-2025", "place": "AK", "household_size": 11, "income_frequency": "twice per month", "fpl": 130, "amount": 4666},
+{"year": "2024-2025", "place": "AK", "household_size": 11, "income_frequency": "every two weeks", "fpl": 130, "amount": 4307},
+{"year": "2024-2025", "place": "AK", "household_size": 11, "income_frequency": "weekly", "fpl": 130, "amount": 2155},
+{"year": "2024-2025", "place": "AK", "household_size": 12, "income_frequency": "annually", "fpl": 185, "amount": 171756},
+{"year": "2024-2025", "place": "AK", "household_size": 12, "income_frequency": "monthly", "fpl": 185, "amount": 14315},
+{"year": "2024-2025", "place": "AK", "household_size": 12, "income_frequency": "twice per month", "fpl": 185, "amount": 7158},
+{"year": "2024-2025", "place": "AK", "household_size": 12, "income_frequency": "every two weeks", "fpl": 185, "amount": 6607},
+{"year": "2024-2025", "place": "AK", "household_size": 12, "income_frequency": "weekly", "fpl": 185, "amount": 3306},
+{"year": "2024-2025", "place": "AK", "household_size": 12, "income_frequency": "annually", "fpl": 130, "amount": 120692},
+{"year": "2024-2025", "place": "AK", "household_size": 12, "income_frequency": "monthly", "fpl": 130, "amount": 10062},
+{"year": "2024-2025", "place": "AK", "household_size": 12, "income_frequency": "twice per month", "fpl": 130, "amount": 5031},
+{"year": "2024-2025", "place": "AK", "household_size": 12, "income_frequency": "every two weeks", "fpl": 130, "amount": 4644},
+{"year": "2024-2025", "place": "AK", "household_size": 12, "income_frequency": "weekly", "fpl": 130, "amount": 2324},
+{"year": "2024-2025", "place": "AK", "household_size": 13, "income_frequency": "annually", "fpl": 185, "amount": 184207},
+{"year": "2024-2025", "place": "AK", "household_size": 13, "income_frequency": "monthly", "fpl": 185, "amount": 15353},
+{"year": "2024-2025", "place": "AK", "household_size": 13, "income_frequency": "twice per month", "fpl": 185, "amount": 7677},
+{"year": "2024-2025", "place": "AK", "household_size": 13, "income_frequency": "every two weeks", "fpl": 185, "amount": 7086},
+{"year": "2024-2025", "place": "AK", "household_size": 13, "income_frequency": "weekly", "fpl": 185, "amount": 3546},
+{"year": "2024-2025", "place": "AK", "household_size": 13, "income_frequency": "annually", "fpl": 130, "amount": 129441},
+{"year": "2024-2025", "place": "AK", "household_size": 13, "income_frequency": "monthly", "fpl": 130, "amount": 10792},
+{"year": "2024-2025", "place": "AK", "household_size": 13, "income_frequency": "twice per month", "fpl": 130, "amount": 5396},
+{"year": "2024-2025", "place": "AK", "household_size": 13, "income_frequency": "every two weeks", "fpl": 130, "amount": 4981},
+{"year": "2024-2025", "place": "AK", "household_size": 13, "income_frequency": "weekly", "fpl": 130, "amount": 2493},
+{"year": "2024-2025", "place": "AK", "household_size": 14, "income_frequency": "annually", "fpl": 185, "amount": 196658},
+{"year": "2024-2025", "place": "AK", "household_size": 14, "income_frequency": "monthly", "fpl": 185, "amount": 16391},
+{"year": "2024-2025", "place": "AK", "household_size": 14, "income_frequency": "twice per month", "fpl": 185, "amount": 8196},
+{"year": "2024-2025", "place": "AK", "household_size": 14, "income_frequency": "every two weeks", "fpl": 185, "amount": 7565},
+{"year": "2024-2025", "place": "AK", "household_size": 14, "income_frequency": "weekly", "fpl": 185, "amount": 3786},
+{"year": "2024-2025", "place": "AK", "household_size": 14, "income_frequency": "annually", "fpl": 130, "amount": 138190},
+{"year": "2024-2025", "place": "AK", "household_size": 14, "income_frequency": "monthly", "fpl": 130, "amount": 11522},
+{"year": "2024-2025", "place": "AK", "household_size": 14, "income_frequency": "twice per month", "fpl": 130, "amount": 5761},
+{"year": "2024-2025", "place": "AK", "household_size": 14, "income_frequency": "every two weeks", "fpl": 130, "amount": 5318},
+{"year": "2024-2025", "place": "AK", "household_size": 14, "income_frequency": "weekly", "fpl": 130, "amount": 2662},
+{"year": "2024-2025", "place": "AK", "household_size": 15, "income_frequency": "annually", "fpl": 185, "amount": 209109},
+{"year": "2024-2025", "place": "AK", "household_size": 15, "income_frequency": "monthly", "fpl": 185, "amount": 17429},
+{"year": "2024-2025", "place": "AK", "household_size": 15, "income_frequency": "twice per month", "fpl": 185, "amount": 8715},
+{"year": "2024-2025", "place": "AK", "household_size": 15, "income_frequency": "every two weeks", "fpl": 185, "amount": 8044},
+{"year": "2024-2025", "place": "AK", "household_size": 15, "income_frequency": "weekly", "fpl": 185, "amount": 4026},
+{"year": "2024-2025", "place": "AK", "household_size": 15, "income_frequency": "annually", "fpl": 130, "amount": 146939},
+{"year": "2024-2025", "place": "AK", "household_size": 15, "income_frequency": "monthly", "fpl": 130, "amount": 12252},
+{"year": "2024-2025", "place": "AK", "household_size": 15, "income_frequency": "twice per month", "fpl": 130, "amount": 6126},
+{"year": "2024-2025", "place": "AK", "household_size": 15, "income_frequency": "every two weeks", "fpl": 130, "amount": 5655},
+{"year": "2024-2025", "place": "AK", "household_size": 15, "income_frequency": "weekly", "fpl": 130, "amount": 2831},
+{"year": "2024-2025", "place": "AK", "household_size": 16, "income_frequency": "annually", "fpl": 185, "amount": 221560},
+{"year": "2024-2025", "place": "AK", "household_size": 16, "income_frequency": "monthly", "fpl": 185, "amount": 18467},
+{"year": "2024-2025", "place": "AK", "household_size": 16, "income_frequency": "twice per month", "fpl": 185, "amount": 9234},
+{"year": "2024-2025", "place": "AK", "household_size": 16, "income_frequency": "every two weeks", "fpl": 185, "amount": 8523},
+{"year": "2024-2025", "place": "AK", "household_size": 16, "income_frequency": "weekly", "fpl": 185, "amount": 4266},
+{"year": "2024-2025", "place": "AK", "household_size": 16, "income_frequency": "annually", "fpl": 130, "amount": 155688},
+{"year": "2024-2025", "place": "AK", "household_size": 16, "income_frequency": "monthly", "fpl": 130, "amount": 12982},
+{"year": "2024-2025", "place": "AK", "household_size": 16, "income_frequency": "twice per month", "fpl": 130, "amount": 6491},
+{"year": "2024-2025", "place": "AK", "household_size": 16, "income_frequency": "every two weeks", "fpl": 130, "amount": 5992},
+{"year": "2024-2025", "place": "AK", "household_size": 16, "income_frequency": "weekly", "fpl": 130, "amount": 3000},
+{"year": "2024-2025", "place": "AK", "household_size": 17, "income_frequency": "annually", "fpl": 185, "amount": 234011},
+{"year": "2024-2025", "place": "AK", "household_size": 17, "income_frequency": "monthly", "fpl": 185, "amount": 19505},
+{"year": "2024-2025", "place": "AK", "household_size": 17, "income_frequency": "twice per month", "fpl": 185, "amount": 9753},
+{"year": "2024-2025", "place": "AK", "household_size": 17, "income_frequency": "every two weeks", "fpl": 185, "amount": 9002},
+{"year": "2024-2025", "place": "AK", "household_size": 17, "income_frequency": "weekly", "fpl": 185, "amount": 4506},
+{"year": "2024-2025", "place": "AK", "household_size": 17, "income_frequency": "annually", "fpl": 130, "amount": 164437},
+{"year": "2024-2025", "place": "AK", "household_size": 17, "income_frequency": "monthly", "fpl": 130, "amount": 13712},
+{"year": "2024-2025", "place": "AK", "household_size": 17, "income_frequency": "twice per month", "fpl": 130, "amount": 6856},
+{"year": "2024-2025", "place": "AK", "household_size": 17, "income_frequency": "every two weeks", "fpl": 130, "amount": 6329},
+{"year": "2024-2025", "place": "AK", "household_size": 17, "income_frequency": "weekly", "fpl": 130, "amount": 3169},
+{"year": "2024-2025", "place": "AK", "household_size": 18, "income_frequency": "annually", "fpl": 185, "amount": 246462},
+{"year": "2024-2025", "place": "AK", "household_size": 18, "income_frequency": "monthly", "fpl": 185, "amount": 20543},
+{"year": "2024-2025", "place": "AK", "household_size": 18, "income_frequency": "twice per month", "fpl": 185, "amount": 10272},
+{"year": "2024-2025", "place": "AK", "household_size": 18, "income_frequency": "every two weeks", "fpl": 185, "amount": 9481},
+{"year": "2024-2025", "place": "AK", "household_size": 18, "income_frequency": "weekly", "fpl": 185, "amount": 4746},
+{"year": "2024-2025", "place": "AK", "household_size": 18, "income_frequency": "annually", "fpl": 130, "amount": 173186},
+{"year": "2024-2025", "place": "AK", "household_size": 18, "income_frequency": "monthly", "fpl": 130, "amount": 14442},
+{"year": "2024-2025", "place": "AK", "household_size": 18, "income_frequency": "twice per month", "fpl": 130, "amount": 7221},
+{"year": "2024-2025", "place": "AK", "household_size": 18, "income_frequency": "every two weeks", "fpl": 130, "amount": 6666},
+{"year": "2024-2025", "place": "AK", "household_size": 18, "income_frequency": "weekly", "fpl": 130, "amount": 3338},
+{"year": "2024-2025", "place": "AK", "household_size": 19, "income_frequency": "annually", "fpl": 185, "amount": 258913},
+{"year": "2024-2025", "place": "AK", "household_size": 19, "income_frequency": "monthly", "fpl": 185, "amount": 21581},
+{"year": "2024-2025", "place": "AK", "household_size": 19, "income_frequency": "twice per month", "fpl": 185, "amount": 10791},
+{"year": "2024-2025", "place": "AK", "household_size": 19, "income_frequency": "every two weeks", "fpl": 185, "amount": 9960},
+{"year": "2024-2025", "place": "AK", "household_size": 19, "income_frequency": "weekly", "fpl": 185, "amount": 4986},
+{"year": "2024-2025", "place": "AK", "household_size": 19, "income_frequency": "annually", "fpl": 130, "amount": 181935},
+{"year": "2024-2025", "place": "AK", "household_size": 19, "income_frequency": "monthly", "fpl": 130, "amount": 15172},
+{"year": "2024-2025", "place": "AK", "household_size": 19, "income_frequency": "twice per month", "fpl": 130, "amount": 7586},
+{"year": "2024-2025", "place": "AK", "household_size": 19, "income_frequency": "every two weeks", "fpl": 130, "amount": 7003},
+{"year": "2024-2025", "place": "AK", "household_size": 19, "income_frequency": "weekly", "fpl": 130, "amount": 3507},
+{"year": "2024-2025", "place": "AK", "household_size": 20, "income_frequency": "annually", "fpl": 185, "amount": 271364},
+{"year": "2024-2025", "place": "AK", "household_size": 20, "income_frequency": "monthly", "fpl": 185, "amount": 22619},
+{"year": "2024-2025", "place": "AK", "household_size": 20, "income_frequency": "twice per month", "fpl": 185, "amount": 11310},
+{"year": "2024-2025", "place": "AK", "household_size": 20, "income_frequency": "every two weeks", "fpl": 185, "amount": 10439},
+{"year": "2024-2025", "place": "AK", "household_size": 20, "income_frequency": "weekly", "fpl": 185, "amount": 5226},
+{"year": "2024-2025", "place": "AK", "household_size": 20, "income_frequency": "annually", "fpl": 130, "amount": 190684},
+{"year": "2024-2025", "place": "AK", "household_size": 20, "income_frequency": "monthly", "fpl": 130, "amount": 15902},
+{"year": "2024-2025", "place": "AK", "household_size": 20, "income_frequency": "twice per month", "fpl": 130, "amount": 7951},
+{"year": "2024-2025", "place": "AK", "household_size": 20, "income_frequency": "every two weeks", "fpl": 130, "amount": 7340},
+{"year": "2024-2025", "place": "AK", "household_size": 20, "income_frequency": "weekly", "fpl": 130, "amount": 3676},
+{"year": "2024-2025", "place": "HI", "household_size": 1, "income_frequency": "annually", "fpl": 185, "amount": 32024},
+{"year": "2024-2025", "place": "HI", "household_size": 1, "income_frequency": "monthly", "fpl": 185, "amount": 2669},
+{"year": "2024-2025", "place": "HI", "household_size": 1, "income_frequency": "twice per month", "fpl": 185, "amount": 1335},
+{"year": "2024-2025", "place": "HI", "household_size": 1, "income_frequency": "every two weeks", "fpl": 185, "amount": 1232},
+{"year": "2024-2025", "place": "HI", "household_size": 1, "income_frequency": "weekly", "fpl": 185, "amount": 616},
+{"year": "2024-2025", "place": "HI", "household_size": 1, "income_frequency": "annually", "fpl": 130, "amount": 22503},
+{"year": "2024-2025", "place": "HI", "household_size": 1, "income_frequency": "monthly", "fpl": 130, "amount": 1876},
+{"year": "2024-2025", "place": "HI", "household_size": 1, "income_frequency": "twice per month", "fpl": 130, "amount": 938},
+{"year": "2024-2025", "place": "HI", "household_size": 1, "income_frequency": "every two weeks", "fpl": 130, "amount": 866},
+{"year": "2024-2025", "place": "HI", "household_size": 1, "income_frequency": "weekly", "fpl": 130, "amount": 433},
+{"year": "2024-2025", "place": "HI", "household_size": 2, "income_frequency": "annually", "fpl": 185, "amount": 43475},
+{"year": "2024-2025", "place": "HI", "household_size": 2, "income_frequency": "monthly", "fpl": 185, "amount": 3623},
+{"year": "2024-2025", "place": "HI", "household_size": 2, "income_frequency": "twice per month", "fpl": 185, "amount": 1812},
+{"year": "2024-2025", "place": "HI", "household_size": 2, "income_frequency": "every two weeks", "fpl": 185, "amount": 1673},
+{"year": "2024-2025", "place": "HI", "household_size": 2, "income_frequency": "weekly", "fpl": 185, "amount": 837},
+{"year": "2024-2025", "place": "HI", "household_size": 2, "income_frequency": "annually", "fpl": 130, "amount": 30550},
+{"year": "2024-2025", "place": "HI", "household_size": 2, "income_frequency": "monthly", "fpl": 130, "amount": 2546},
+{"year": "2024-2025", "place": "HI", "household_size": 2, "income_frequency": "twice per month", "fpl": 130, "amount": 1273},
+{"year": "2024-2025", "place": "HI", "household_size": 2, "income_frequency": "every two weeks", "fpl": 130, "amount": 1175},
+{"year": "2024-2025", "place": "HI", "household_size": 2, "income_frequency": "weekly", "fpl": 130, "amount": 588},
+{"year": "2024-2025", "place": "HI", "household_size": 3, "income_frequency": "annually", "fpl": 185, "amount": 54927},
+{"year": "2024-2025", "place": "HI", "household_size": 3, "income_frequency": "monthly", "fpl": 185, "amount": 4578},
+{"year": "2024-2025", "place": "HI", "household_size": 3, "income_frequency": "twice per month", "fpl": 185, "amount": 2289},
+{"year": "2024-2025", "place": "HI", "household_size": 3, "income_frequency": "every two weeks", "fpl": 185, "amount": 2113},
+{"year": "2024-2025", "place": "HI", "household_size": 3, "income_frequency": "weekly", "fpl": 185, "amount": 1057},
+{"year": "2024-2025", "place": "HI", "household_size": 3, "income_frequency": "annually", "fpl": 130, "amount": 38597},
+{"year": "2024-2025", "place": "HI", "household_size": 3, "income_frequency": "monthly", "fpl": 130, "amount": 3217},
+{"year": "2024-2025", "place": "HI", "household_size": 3, "income_frequency": "twice per month", "fpl": 130, "amount": 1609},
+{"year": "2024-2025", "place": "HI", "household_size": 3, "income_frequency": "every two weeks", "fpl": 130, "amount": 1485},
+{"year": "2024-2025", "place": "HI", "household_size": 3, "income_frequency": "weekly", "fpl": 130, "amount": 743},
+{"year": "2024-2025", "place": "HI", "household_size": 4, "income_frequency": "annually", "fpl": 185, "amount": 66378},
+{"year": "2024-2025", "place": "HI", "household_size": 4, "income_frequency": "monthly", "fpl": 185, "amount": 5532},
+{"year": "2024-2025", "place": "HI", "household_size": 4, "income_frequency": "twice per month", "fpl": 185, "amount": 2766},
+{"year": "2024-2025", "place": "HI", "household_size": 4, "income_frequency": "every two weeks", "fpl": 185, "amount": 2553},
+{"year": "2024-2025", "place": "HI", "household_size": 4, "income_frequency": "weekly", "fpl": 185, "amount": 1277},
+{"year": "2024-2025", "place": "HI", "household_size": 4, "income_frequency": "annually", "fpl": 130, "amount": 46644},
+{"year": "2024-2025", "place": "HI", "household_size": 4, "income_frequency": "monthly", "fpl": 130, "amount": 3887},
+{"year": "2024-2025", "place": "HI", "household_size": 4, "income_frequency": "twice per month", "fpl": 130, "amount": 1944},
+{"year": "2024-2025", "place": "HI", "household_size": 4, "income_frequency": "every two weeks", "fpl": 130, "amount": 1794},
+{"year": "2024-2025", "place": "HI", "household_size": 4, "income_frequency": "weekly", "fpl": 130, "amount": 897},
+{"year": "2024-2025", "place": "HI", "household_size": 5, "income_frequency": "annually", "fpl": 185, "amount": 77830},
+{"year": "2024-2025", "place": "HI", "household_size": 5, "income_frequency": "monthly", "fpl": 185, "amount": 6486},
+{"year": "2024-2025", "place": "HI", "household_size": 5, "income_frequency": "twice per month", "fpl": 185, "amount": 3243},
+{"year": "2024-2025", "place": "HI", "household_size": 5, "income_frequency": "every two weeks", "fpl": 185, "amount": 2994},
+{"year": "2024-2025", "place": "HI", "household_size": 5, "income_frequency": "weekly", "fpl": 185, "amount": 1497},
+{"year": "2024-2025", "place": "HI", "household_size": 5, "income_frequency": "annually", "fpl": 130, "amount": 54691},
+{"year": "2024-2025", "place": "HI", "household_size": 5, "income_frequency": "monthly", "fpl": 130, "amount": 4558},
+{"year": "2024-2025", "place": "HI", "household_size": 5, "income_frequency": "twice per month", "fpl": 130, "amount": 2279},
+{"year": "2024-2025", "place": "HI", "household_size": 5, "income_frequency": "every two weeks", "fpl": 130, "amount": 2104},
+{"year": "2024-2025", "place": "HI", "household_size": 5, "income_frequency": "weekly", "fpl": 130, "amount": 1052},
+{"year": "2024-2025", "place": "HI", "household_size": 6, "income_frequency": "annually", "fpl": 185, "amount": 89281},
+{"year": "2024-2025", "place": "HI", "household_size": 6, "income_frequency": "monthly", "fpl": 185, "amount": 7441},
+{"year": "2024-2025", "place": "HI", "household_size": 6, "income_frequency": "twice per month", "fpl": 185, "amount": 3721},
+{"year": "2024-2025", "place": "HI", "household_size": 6, "income_frequency": "every two weeks", "fpl": 185, "amount": 3434},
+{"year": "2024-2025", "place": "HI", "household_size": 6, "income_frequency": "weekly", "fpl": 185, "amount": 1717},
+{"year": "2024-2025", "place": "HI", "household_size": 6, "income_frequency": "annually", "fpl": 130, "amount": 62738},
+{"year": "2024-2025", "place": "HI", "household_size": 6, "income_frequency": "monthly", "fpl": 130, "amount": 5229},
+{"year": "2024-2025", "place": "HI", "household_size": 6, "income_frequency": "twice per month", "fpl": 130, "amount": 2615},
+{"year": "2024-2025", "place": "HI", "household_size": 6, "income_frequency": "every two weeks", "fpl": 130, "amount": 2413},
+{"year": "2024-2025", "place": "HI", "household_size": 6, "income_frequency": "weekly", "fpl": 130, "amount": 1207},
+{"year": "2024-2025", "place": "HI", "household_size": 7, "income_frequency": "annually", "fpl": 185, "amount": 100733},
+{"year": "2024-2025", "place": "HI", "household_size": 7, "income_frequency": "monthly", "fpl": 185, "amount": 8395},
+{"year": "2024-2025", "place": "HI", "household_size": 7, "income_frequency": "twice per month", "fpl": 185, "amount": 4198},
+{"year": "2024-2025", "place": "HI", "household_size": 7, "income_frequency": "every two weeks", "fpl": 185, "amount": 3875},
+{"year": "2024-2025", "place": "HI", "household_size": 7, "income_frequency": "weekly", "fpl": 185, "amount": 1938},
+{"year": "2024-2025", "place": "HI", "household_size": 7, "income_frequency": "annually", "fpl": 130, "amount": 70785},
+{"year": "2024-2025", "place": "HI", "household_size": 7, "income_frequency": "monthly", "fpl": 130, "amount": 5899},
+{"year": "2024-2025", "place": "HI", "household_size": 7, "income_frequency": "twice per month", "fpl": 130, "amount": 2950},
+{"year": "2024-2025", "place": "HI", "household_size": 7, "income_frequency": "every two weeks", "fpl": 130, "amount": 2723},
+{"year": "2024-2025", "place": "HI", "household_size": 7, "income_frequency": "weekly", "fpl": 130, "amount": 1362},
+{"year": "2024-2025", "place": "HI", "household_size": 8, "income_frequency": "annually", "fpl": 185, "amount": 112184},
+{"year": "2024-2025", "place": "HI", "household_size": 8, "income_frequency": "monthly", "fpl": 185, "amount": 9349},
+{"year": "2024-2025", "place": "HI", "household_size": 8, "income_frequency": "twice per month", "fpl": 185, "amount": 4675},
+{"year": "2024-2025", "place": "HI", "household_size": 8, "income_frequency": "every two weeks", "fpl": 185, "amount": 4315},
+{"year": "2024-2025", "place": "HI", "household_size": 8, "income_frequency": "weekly", "fpl": 185, "amount": 2158},
+{"year": "2024-2025", "place": "HI", "household_size": 8, "income_frequency": "annually", "fpl": 130, "amount": 78832},
+{"year": "2024-2025", "place": "HI", "household_size": 8, "income_frequency": "monthly", "fpl": 130, "amount": 6570},
+{"year": "2024-2025", "place": "HI", "household_size": 8, "income_frequency": "twice per month", "fpl": 130, "amount": 3285},
+{"year": "2024-2025", "place": "HI", "household_size": 8, "income_frequency": "every two weeks", "fpl": 130, "amount": 3032},
+{"year": "2024-2025", "place": "HI", "household_size": 8, "income_frequency": "weekly", "fpl": 130, "amount": 1516},
+{"year": "2024-2025", "place": "HI", "household_size": 9, "income_frequency": "annually", "fpl": 185, "amount": 123636},
+{"year": "2024-2025", "place": "HI", "household_size": 9, "income_frequency": "monthly", "fpl": 185, "amount": 10304},
+{"year": "2024-2025", "place": "HI", "household_size": 9, "income_frequency": "twice per month", "fpl": 185, "amount": 5153},
+{"year": "2024-2025", "place": "HI", "household_size": 9, "income_frequency": "every two weeks", "fpl": 185, "amount": 4756},
+{"year": "2024-2025", "place": "HI", "household_size": 9, "income_frequency": "weekly", "fpl": 185, "amount": 2379},
+{"year": "2024-2025", "place": "HI", "household_size": 9, "income_frequency": "annually", "fpl": 130, "amount": 86879},
+{"year": "2024-2025", "place": "HI", "household_size": 9, "income_frequency": "monthly", "fpl": 130, "amount": 7241},
+{"year": "2024-2025", "place": "HI", "household_size": 9, "income_frequency": "twice per month", "fpl": 130, "amount": 3621},
+{"year": "2024-2025", "place": "HI", "household_size": 9, "income_frequency": "every two weeks", "fpl": 130, "amount": 3342},
+{"year": "2024-2025", "place": "HI", "household_size": 9, "income_frequency": "weekly", "fpl": 130, "amount": 1671},
+{"year": "2024-2025", "place": "HI", "household_size": 10, "income_frequency": "annually", "fpl": 185, "amount": 135088},
+{"year": "2024-2025", "place": "HI", "household_size": 10, "income_frequency": "monthly", "fpl": 185, "amount": 11259},
+{"year": "2024-2025", "place": "HI", "household_size": 10, "income_frequency": "twice per month", "fpl": 185, "amount": 5631},
+{"year": "2024-2025", "place": "HI", "household_size": 10, "income_frequency": "every two weeks", "fpl": 185, "amount": 5197},
+{"year": "2024-2025", "place": "HI", "household_size": 10, "income_frequency": "weekly", "fpl": 185, "amount": 2600},
+{"year": "2024-2025", "place": "HI", "household_size": 10, "income_frequency": "annually", "fpl": 130, "amount": 94926},
+{"year": "2024-2025", "place": "HI", "household_size": 10, "income_frequency": "monthly", "fpl": 130, "amount": 7912},
+{"year": "2024-2025", "place": "HI", "household_size": 10, "income_frequency": "twice per month", "fpl": 130, "amount": 3957},
+{"year": "2024-2025", "place": "HI", "household_size": 10, "income_frequency": "every two weeks", "fpl": 130, "amount": 3652},
+{"year": "2024-2025", "place": "HI", "household_size": 10, "income_frequency": "weekly", "fpl": 130, "amount": 1826},
+{"year": "2024-2025", "place": "HI", "household_size": 11, "income_frequency": "annually", "fpl": 185, "amount": 146540},
+{"year": "2024-2025", "place": "HI", "household_size": 11, "income_frequency": "monthly", "fpl": 185, "amount": 12214},
+{"year": "2024-2025", "place": "HI", "household_size": 11, "income_frequency": "twice per month", "fpl": 185, "amount": 6109},
+{"year": "2024-2025", "place": "HI", "household_size": 11, "income_frequency": "every two weeks", "fpl": 185, "amount": 5638},
+{"year": "2024-2025", "place": "HI", "household_size": 11, "income_frequency": "weekly", "fpl": 185, "amount": 2821},
+{"year": "2024-2025", "place": "HI", "household_size": 11, "income_frequency": "annually", "fpl": 130, "amount": 102973},
+{"year": "2024-2025", "place": "HI", "household_size": 11, "income_frequency": "monthly", "fpl": 130, "amount": 8583},
+{"year": "2024-2025", "place": "HI", "household_size": 11, "income_frequency": "twice per month", "fpl": 130, "amount": 4293},
+{"year": "2024-2025", "place": "HI", "household_size": 11, "income_frequency": "every two weeks", "fpl": 130, "amount": 3962},
+{"year": "2024-2025", "place": "HI", "household_size": 11, "income_frequency": "weekly", "fpl": 130, "amount": 1981},
+{"year": "2024-2025", "place": "HI", "household_size": 12, "income_frequency": "annually", "fpl": 185, "amount": 157992},
+{"year": "2024-2025", "place": "HI", "household_size": 12, "income_frequency": "monthly", "fpl": 185, "amount": 13169},
+{"year": "2024-2025", "place": "HI", "household_size": 12, "income_frequency": "twice per month", "fpl": 185, "amount": 6587},
+{"year": "2024-2025", "place": "HI", "household_size": 12, "income_frequency": "every two weeks", "fpl": 185, "amount": 6079},
+{"year": "2024-2025", "place": "HI", "household_size": 12, "income_frequency": "weekly", "fpl": 185, "amount": 3042},
+{"year": "2024-2025", "place": "HI", "household_size": 12, "income_frequency": "annually", "fpl": 130, "amount": 111020},
+{"year": "2024-2025", "place": "HI", "household_size": 12, "income_frequency": "monthly", "fpl": 130, "amount": 9254},
+{"year": "2024-2025", "place": "HI", "household_size": 12, "income_frequency": "twice per month", "fpl": 130, "amount": 4629},
+{"year": "2024-2025", "place": "HI", "household_size": 12, "income_frequency": "every two weeks", "fpl": 130, "amount": 4272},
+{"year": "2024-2025", "place": "HI", "household_size": 12, "income_frequency": "weekly", "fpl": 130, "amount": 2136},
+{"year": "2024-2025", "place": "HI", "household_size": 13, "income_frequency": "annually", "fpl": 185, "amount": 169444},
+{"year": "2024-2025", "place": "HI", "household_size": 13, "income_frequency": "monthly", "fpl": 185, "amount": 14124},
+{"year": "2024-2025", "place": "HI", "household_size": 13, "income_frequency": "twice per month", "fpl": 185, "amount": 7065},
+{"year": "2024-2025", "place": "HI", "household_size": 13, "income_frequency": "every two weeks", "fpl": 185, "amount": 6520},
+{"year": "2024-2025", "place": "HI", "household_size": 13, "income_frequency": "weekly", "fpl": 185, "amount": 3263},
+{"year": "2024-2025", "place": "HI", "household_size": 13, "income_frequency": "annually", "fpl": 130, "amount": 119067},
+{"year": "2024-2025", "place": "HI", "household_size": 13, "income_frequency": "monthly", "fpl": 130, "amount": 9925},
+{"year": "2024-2025", "place": "HI", "household_size": 13, "income_frequency": "twice per month", "fpl": 130, "amount": 4965},
+{"year": "2024-2025", "place": "HI", "household_size": 13, "income_frequency": "every two weeks", "fpl": 130, "amount": 4582},
+{"year": "2024-2025", "place": "HI", "household_size": 13, "income_frequency": "weekly", "fpl": 130, "amount": 2291},
+{"year": "2024-2025", "place": "HI", "household_size": 14, "income_frequency": "annually", "fpl": 185, "amount": 180896},
+{"year": "2024-2025", "place": "HI", "household_size": 14, "income_frequency": "monthly", "fpl": 185, "amount": 15079},
+{"year": "2024-2025", "place": "HI", "household_size": 14, "income_frequency": "twice per month", "fpl": 185, "amount": 7543},
+{"year": "2024-2025", "place": "HI", "household_size": 14, "income_frequency": "every two weeks", "fpl": 185, "amount": 6961},
+{"year": "2024-2025", "place": "HI", "household_size": 14, "income_frequency": "weekly", "fpl": 185, "amount": 3484},
+{"year": "2024-2025", "place": "HI", "household_size": 14, "income_frequency": "annually", "fpl": 130, "amount": 127114},
+{"year": "2024-2025", "place": "HI", "household_size": 14, "income_frequency": "monthly", "fpl": 130, "amount": 10596},
+{"year": "2024-2025", "place": "HI", "household_size": 14, "income_frequency": "twice per month", "fpl": 130, "amount": 5301},
+{"year": "2024-2025", "place": "HI", "household_size": 14, "income_frequency": "every two weeks", "fpl": 130, "amount": 4892},
+{"year": "2024-2025", "place": "HI", "household_size": 14, "income_frequency": "weekly", "fpl": 130, "amount": 2446},
+{"year": "2024-2025", "place": "HI", "household_size": 15, "income_frequency": "annually", "fpl": 185, "amount": 192348},
+{"year": "2024-2025", "place": "HI", "household_size": 15, "income_frequency": "monthly", "fpl": 185, "amount": 16034},
+{"year": "2024-2025", "place": "HI", "household_size": 15, "income_frequency": "twice per month", "fpl": 185, "amount": 8021},
+{"year": "2024-2025", "place": "HI", "household_size": 15, "income_frequency": "every two weeks", "fpl": 185, "amount": 7402},
+{"year": "2024-2025", "place": "HI", "household_size": 15, "income_frequency": "weekly", "fpl": 185, "amount": 3705},
+{"year": "2024-2025", "place": "HI", "household_size": 15, "income_frequency": "annually", "fpl": 130, "amount": 135161},
+{"year": "2024-2025", "place": "HI", "household_size": 15, "income_frequency": "monthly", "fpl": 130, "amount": 11267},
+{"year": "2024-2025", "place": "HI", "household_size": 15, "income_frequency": "twice per month", "fpl": 130, "amount": 5637},
+{"year": "2024-2025", "place": "HI", "household_size": 15, "income_frequency": "every two weeks", "fpl": 130, "amount": 5202},
+{"year": "2024-2025", "place": "HI", "household_size": 15, "income_frequency": "weekly", "fpl": 130, "amount": 2601},
+{"year": "2024-2025", "place": "HI", "household_size": 16, "income_frequency": "annually", "fpl": 185, "amount": 203800},
+{"year": "2024-2025", "place": "HI", "household_size": 16, "income_frequency": "monthly", "fpl": 185, "amount": 16989},
+{"year": "2024-2025", "place": "HI", "household_size": 16, "income_frequency": "twice per month", "fpl": 185, "amount": 8499},
+{"year": "2024-2025", "place": "HI", "household_size": 16, "income_frequency": "every two weeks", "fpl": 185, "amount": 7843},
+{"year": "2024-2025", "place": "HI", "household_size": 16, "income_frequency": "weekly", "fpl": 185, "amount": 3926},
+{"year": "2024-2025", "place": "HI", "household_size": 16, "income_frequency": "annually", "fpl": 130, "amount": 143208},
+{"year": "2024-2025", "place": "HI", "household_size": 16, "income_frequency": "monthly", "fpl": 130, "amount": 11938},
+{"year": "2024-2025", "place": "HI", "household_size": 16, "income_frequency": "twice per month", "fpl": 130, "amount": 5973},
+{"year": "2024-2025", "place": "HI", "household_size": 16, "income_frequency": "every two weeks", "fpl": 130, "amount": 5512},
+{"year": "2024-2025", "place": "HI", "household_size": 16, "income_frequency": "weekly", "fpl": 130, "amount": 2756},
+{"year": "2024-2025", "place": "HI", "household_size": 17, "income_frequency": "annually", "fpl": 185, "amount": 215252},
+{"year": "2024-2025", "place": "HI", "household_size": 17, "income_frequency": "monthly", "fpl": 185, "amount": 17944},
+{"year": "2024-2025", "place": "HI", "household_size": 17, "income_frequency": "twice per month", "fpl": 185, "amount": 8977},
+{"year": "2024-2025", "place": "HI", "household_size": 17, "income_frequency": "every two weeks", "fpl": 185, "amount": 8284},
+{"year": "2024-2025", "place": "HI", "household_size": 17, "income_frequency": "weekly", "fpl": 185, "amount": 4147},
+{"year": "2024-2025", "place": "HI", "household_size": 17, "income_frequency": "annually", "fpl": 130, "amount": 151255},
+{"year": "2024-2025", "place": "HI", "household_size": 17, "income_frequency": "monthly", "fpl": 130, "amount": 12609},
+{"year": "2024-2025", "place": "HI", "household_size": 17, "income_frequency": "twice per month", "fpl": 130, "amount": 6309},
+{"year": "2024-2025", "place": "HI", "household_size": 17, "income_frequency": "every two weeks", "fpl": 130, "amount": 5822},
+{"year": "2024-2025", "place": "HI", "household_size": 17, "income_frequency": "weekly", "fpl": 130, "amount": 2911},
+{"year": "2024-2025", "place": "HI", "household_size": 18, "income_frequency": "annually", "fpl": 185, "amount": 226704},
+{"year": "2024-2025", "place": "HI", "household_size": 18, "income_frequency": "monthly", "fpl": 185, "amount": 18899},
+{"year": "2024-2025", "place": "HI", "household_size": 18, "income_frequency": "twice per month", "fpl": 185, "amount": 9455},
+{"year": "2024-2025", "place": "HI", "household_size": 18, "income_frequency": "every two weeks", "fpl": 185, "amount": 8725},
+{"year": "2024-2025", "place": "HI", "household_size": 18, "income_frequency": "weekly", "fpl": 185, "amount": 4368},
+{"year": "2024-2025", "place": "HI", "household_size": 18, "income_frequency": "annually", "fpl": 130, "amount": 159302},
+{"year": "2024-2025", "place": "HI", "household_size": 18, "income_frequency": "monthly", "fpl": 130, "amount": 13280},
+{"year": "2024-2025", "place": "HI", "household_size": 18, "income_frequency": "twice per month", "fpl": 130, "amount": 6645},
+{"year": "2024-2025", "place": "HI", "household_size": 18, "income_frequency": "every two weeks", "fpl": 130, "amount": 6132},
+{"year": "2024-2025", "place": "HI", "household_size": 18, "income_frequency": "weekly", "fpl": 130, "amount": 3066},
+{"year": "2024-2025", "place": "HI", "household_size": 19, "income_frequency": "annually", "fpl": 185, "amount": 238156},
+{"year": "2024-2025", "place": "HI", "household_size": 19, "income_frequency": "monthly", "fpl": 185, "amount": 19854},
+{"year": "2024-2025", "place": "HI", "household_size": 19, "income_frequency": "twice per month", "fpl": 185, "amount": 9933},
+{"year": "2024-2025", "place": "HI", "household_size": 19, "income_frequency": "every two weeks", "fpl": 185, "amount": 9166},
+{"year": "2024-2025", "place": "HI", "household_size": 19, "income_frequency": "weekly", "fpl": 185, "amount": 4589},
+{"year": "2024-2025", "place": "HI", "household_size": 19, "income_frequency": "annually", "fpl": 130, "amount": 167349},
+{"year": "2024-2025", "place": "HI", "household_size": 19, "income_frequency": "monthly", "fpl": 130, "amount": 13951},
+{"year": "2024-2025", "place": "HI", "household_size": 19, "income_frequency": "twice per month", "fpl": 130, "amount": 6981},
+{"year": "2024-2025", "place": "HI", "household_size": 19, "income_frequency": "every two weeks", "fpl": 130, "amount": 6442},
+{"year": "2024-2025", "place": "HI", "household_size": 19, "income_frequency": "weekly", "fpl": 130, "amount": 3221},
+{"year": "2024-2025", "place": "HI", "household_size": 20, "income_frequency": "annually", "fpl": 185, "amount": 249608},
+{"year": "2024-2025", "place": "HI", "household_size": 20, "income_frequency": "monthly", "fpl": 185, "amount": 20809},
+{"year": "2024-2025", "place": "HI", "household_size": 20, "income_frequency": "twice per month", "fpl": 185, "amount": 10411},
+{"year": "2024-2025", "place": "HI", "household_size": 20, "income_frequency": "every two weeks", "fpl": 185, "amount": 9607},
+{"year": "2024-2025", "place": "HI", "household_size": 20, "income_frequency": "weekly", "fpl": 185, "amount": 4810},
+{"year": "2024-2025", "place": "HI", "household_size": 20, "income_frequency": "annually", "fpl": 130, "amount": 175396},
+{"year": "2024-2025", "place": "HI", "household_size": 20, "income_frequency": "monthly", "fpl": 130, "amount": 14622},
+{"year": "2024-2025", "place": "HI", "household_size": 20, "income_frequency": "twice per month", "fpl": 130, "amount": 7317},
+{"year": "2024-2025", "place": "HI", "household_size": 20, "income_frequency": "every two weeks", "fpl": 130, "amount": 6752},
+{"year": "2024-2025", "place": "HI", "household_size": 20, "income_frequency": "weekly", "fpl": 130, "amount": 3376},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "annually", "fpl": 185, "amount": 9953},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "monthly", "fpl": 185, "amount": 830},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "twice per month", "fpl": 185, "amount": 415},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 185, "amount": 383},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "weekly", "fpl": 185, "amount": 192},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "annually", "fpl": 130, "amount": 6994},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "monthly", "fpl": 130, "amount": 583},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "twice per month", "fpl": 130, "amount": 292},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 130, "amount": 269},
+{"year": "2024-2025", "place": "(not AK or HI)", "household_size": "additional", "income_frequency": "weekly", "fpl": 130, "amount": 135},
+{"year": "2024-2025", "place": "AK", "household_size": "additional", "income_frequency": "annually", "fpl": 185, "amount": 12451},
+{"year": "2024-2025", "place": "AK", "household_size": "additional", "income_frequency": "monthly", "fpl": 185, "amount": 1038},
+{"year": "2024-2025", "place": "AK", "household_size": "additional", "income_frequency": "twice per month", "fpl": 185, "amount": 519},
+{"year": "2024-2025", "place": "AK", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 185, "amount": 479},
+{"year": "2024-2025", "place": "AK", "household_size": "additional", "income_frequency": "weekly", "fpl": 185, "amount": 240},
+{"year": "2024-2025", "place": "AK", "household_size": "additional", "income_frequency": "annually", "fpl": 130, "amount": 8749},
+{"year": "2024-2025", "place": "AK", "household_size": "additional", "income_frequency": "monthly", "fpl": 130, "amount": 730},
+{"year": "2024-2025", "place": "AK", "household_size": "additional", "income_frequency": "twice per month", "fpl": 130, "amount": 365},
+{"year": "2024-2025", "place": "AK", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 130, "amount": 337},
+{"year": "2024-2025", "place": "AK", "household_size": "additional", "income_frequency": "weekly", "fpl": 130, "amount": 169},
+{"year": "2024-2025", "place": "HI", "household_size": "additional", "income_frequency": "annually", "fpl": 185, "amount": 11452},
+{"year": "2024-2025", "place": "HI", "household_size": "additional", "income_frequency": "monthly", "fpl": 185, "amount": 955},
+{"year": "2024-2025", "place": "HI", "household_size": "additional", "income_frequency": "twice per month", "fpl": 185, "amount": 478},
+{"year": "2024-2025", "place": "HI", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 185, "amount": 441},
+{"year": "2024-2025", "place": "HI", "household_size": "additional", "income_frequency": "weekly", "fpl": 185, "amount": 221},
+{"year": "2024-2025", "place": "HI", "household_size": "additional", "income_frequency": "annually", "fpl": 130, "amount": 8047},
+{"year": "2024-2025", "place": "HI", "household_size": "additional", "income_frequency": "monthly", "fpl": 130, "amount": 671},
+{"year": "2024-2025", "place": "HI", "household_size": "additional", "income_frequency": "twice per month", "fpl": 130, "amount": 336},
+{"year": "2024-2025", "place": "HI", "household_size": "additional", "income_frequency": "every two weeks", "fpl": 130, "amount": 310},
+{"year": "2024-2025", "place": "HI", "household_size": "additional", "income_frequency": "weekly", "fpl": 130, "amount": 155},
+];
+
+var outcomes = __OUTCOMES__;
+var outcome_codes = [];
+outcomes.forEach((outcome) => {
+    outcome_codes.push(outcome.outcome_code);
+});
+
+// VIEW
+
+var question_order = function() {
+    let user_response_count = Object.keys(user_response_values).length;
+    let next_question_code;
+    let SCP = user_response_values["SCP"];
+    let SCS = user_response_values["SCS"];
+    let ACE = user_response_values["ACE"];
+    let SCH = user_response_values["SCH"];
+    let FRP = user_response_values["FRP"];
+    let INS = user_response_values["INS"];
+    let INC = user_response_values["INC"];
+    console.log("response length: " + user_response_count);
+    switch(true) {
+        // for response counts using INC, add one for INS also
+        // when to ask SCP -- first question; user_responses length of zero returns a falsy value, which returns a Boolean false
+        case user_response_count == false:
+            next_question_code = "SCP";
+            break;
+        // when to ask SCS
+        case (user_response_count == 1 && SCP == 0):
+        case (user_response_count == 2 && SCP == 2 && ACE == 1):
+            next_question_code = "SCS"
+            break;
+        // when to ask ACE
+        case (user_response_count == 2 && SCP == 0 && SCS == 1): 
+        case (user_response_count == 1 && SCP == 1):
+        case (user_response_count == 1 && SCP == 2):
+            next_question_code = "ACE";
+            break;
+        // when to ask SCH
+        case (user_response_count == 2 && SCP == 0 && SCS == 0):
+        case (user_response_count == 3 && SCP == 0 && SCS == 1 && ACE == 0):
+        case (user_response_count == 2 && SCP == 1 && ACE == 0):
+        case (user_response_count == 2 && SCP == 2 && ACE == 0):
+        case (user_response_count == 4 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0): 
+            next_question_code = "SCH";
+            break;
+        // when to ask FRP
+        case (user_response_count == 3 && SCP == 0 && SCS == 0 && SCH == 1):
+        case (user_response_count == 4 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1):
+        case (user_response_count == 3 && SCP == 1 && ACE == 0 && SCH == 1):
+        case (user_response_count == 3 && SCP == 2 && ACE == 0 && SCH == 1):
+        case (user_response_count == 5 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1):
+            next_question_code = "FRP";
+            break;
+        // when to ask INS
+        case (user_response_count == 3 && SCP == 2 && SCS == 0):
+        case (user_response_count == 3 && SCP == 0 && SCS == 0 && SCH == 2):
+        case (user_response_count == 4 && SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+        case (user_response_count == 5 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+        case (user_response_count == 4 && SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+        case (user_response_count == 4 && SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2)):
+        case (user_response_count == 6 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1 && (FRP == 0 || FRP ==2)):
+        case (user_response_count == 3 && SCP == 2 && ACE == 0 && SCH == 2):
+            next_question_code = "INS";
+            break;
+        // when to ask INC
+        case (user_response_count == 5 && SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+        case (user_response_count == 6 && SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+        case (user_response_count == 5 && SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+        case (user_response_count == 5 && SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+        case (user_response_count == 7 && SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1 && (FRP == 0 || FRP ==2) && !FRP == []):
+        case INS != undefined:
+            next_question_code = "INC";
+            break;
+        // }
+        // next_question(next_question_code);
+    };
+    question_bank[next_question_code].display_question();
+    // current_question_code = next_question_code;
+    console.log(user_responses);
+};
+
+var evaluate_streamlined_cert_responses = function() {
+    // For streamlined certification questions where multiple responses are selected, assign the value that maximizes eligibility. For programs, streamlined certification via SNAP, TANF, FDPIR, and Head Start is preferable to having Medicaid because Medicaid requires confirmation of income eligibility while the other programs do not. For statuses, all statuses are equal.
+    var responses_to_question;
+    Object.keys(user_response_values).forEach((key) => {
+        var responses_to_question = user_response_values[key];
+        switch (key) {
+            case "SCP":
+                switch (true) {
+                    case responses_to_question.includes("1"):
+                        user_response_values[key] = "1";
+                        break;
+                    case responses_to_question.includes("2"):
+                        user_response_values[key] = "2";
+                        break;
+                    case responses_to_question.includes("0"):
+                        user_response_values[key] = "0";
+                        break;
+                };
+                break;
+            case "SCS":
+                if (responses_to_question.includes("1")) {
+                    user_response_values[key] = "1";
+                } else if (responses_to_question.includes("0")) {
+                    user_response_values[key] = "0";
+                };
+                break;
+            default:
+                break;
+        };
+    });
+};
+
+var determine_eligibility = function() {
+    // let language = languageSelector.value;
+    let user_response_count = Object.keys(user_response_values).length;
+    // previous_question_code = current_question_code;
+    let SCP = user_response_values["SCP"];
+    let SCS = user_response_values["SCS"];
+    let ACE = user_response_values["ACE"];
+    let SCH = user_response_values["SCH"];
+    let FRP = user_response_values["FRP"];
+    let INS = user_response_values["INS"];
+    let INC = user_response_values["INC"];
+    console.log("response length: " + user_response_count);
+    switch (true) {
+        case (SCP == 1 && ACE == 1):
+        case (SCP == 1 && ACE == 0 && SCH == 2):
+        case (SCP == 2 && ACE == 1 && SCS == 0 && INC == 1):
+            eligibility_determination = "mSCP";
+            break;
+        case (SCP == 0 && SCS == 1 && ACE == 1):
+        case (SCP == 2 && ACE == 1 && SCS == 1):
+        case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 2):
+            eligibility_determination = "mSCS";
+            break;
+        case (SCP == 0 && SCS == 0 && SCH == 1 && FRP == 1):
+        case (SCP == 1 && ACE == 0 && SCH == 1 && FRP == 1):
+        case (SCP == 2 && ACE == 0 && SCH == 1 && FRP == 1):
+        case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && FRP == 1):
+        case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && FRP == 1):
+            eligibility_determination = "mFRP";
+            break;
+        case (SCP == 0 && SCS == 0 && SCH == 2 && INC == 1):
+        case (SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
+        case (SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
+        case (SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
+        case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
+        case (SCP == 2 && ACE == 0 && SCH == 2 && INC == 1):
+        case (SCP == 2 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 1):
+            eligibility_determination = "mELI";
+            break;
+        case (INC == 2):
+            eligibility_determination = "mUNK";
+            break;
+        case (SCP == 0 && SCS == 0 && SCH == 0):
+        case (SCP == 1 && ACE == 0 && SCH == 0):
+        case (SCP == 2 && ACE == 0 && SCH == 0):
+        case (SCP == 0 && SCS == 0 && SCH == 2 && INC == 0):
+        case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 0):
+        case (SCP == 2 && ACE == 0 && SCH == 2 && INC == 0):
+        case (SCP == 0 && SCS == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
+        case (SCP == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
+        case (SCP == 2 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
+        case (SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 0):
+        case (SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 2):
+        case (SCP == 0 && SCS == 1 && ACE == 0 && SCH == 1 && (FRP == 0 || FRP == 2) && INC == 0):
+        case (SCP == 2 && ACE == 1 && SCS == 0 && INC == 0 && SCH == 1 && (FRP == 0 || FRP == 2)):
+            eligibility_determination = "mNOT";
+            break;
+        default:
+            break;
+    };
+    display_eligibility_outcome();
+};
+
+var display_eligibility_outcome = function() {
+    if (outcome_codes.includes(eligibility_determination)) {
+        console.log(eligibility_determination);
+        var eligibility_determination_element = document.getElementById("section_content");
+        // eligibility_determination_element.className = "eligibility";
+        // filter outcomes - filters to an array containing a single outcome dictionary --> use "[0]" to get the outcome as a dictionary only
+        var determined_outcome = outcomes.filter(outcome => outcome.outcome_code == eligibility_determination)[0];
+        switch (eligibility_determination) {
+            case "mSCP":
+                var template_outcome_text = determined_outcome.outcome_text;
+                var outcome_text_to_modify = "{ programs selected from question }";
+                var replacement_text = [];
+                user_responses["SCP"].forEach((response) => {
+                    var response_index = question_bank["SCP"].answer_codes.indexOf(response);
+                    replacement_text.push(question_bank["SCP"].answer_text[response_index]);
+                });
+                var custom_outcome_text = template_outcome_text.replace(outcome_text_to_modify, replacement_text.join(", "));
+                eligibility_determination_element.innerHTML = custom_outcome_text;
+                break;
+            case "mSCS":
+                var template_outcome_text = determined_outcome.outcome_text;
+                var outcome_text_to_modify = "{ statuses selected from question }";
+                var replacement_text = [];
+                user_responses["SCS"].forEach((response) => {
+                    var response_index = question_bank["SCS"].answer_codes.indexOf(response);
+                    replacement_text.push(question_bank["SCS"].answer_text[response_index]);
+                });
+                var custom_outcome_text = template_outcome_text.replace(outcome_text_to_modify, replacement_text.join(", "));
+                eligibility_determination_element.innerHTML = custom_outcome_text;
+                break;
+            default:
+                eligibility_determination_element.innerHTML = determined_outcome.outcome_text;
+                break;
+        };
+        // next_button_element.value = button_text["reset"][language];
+        // next_button_element.removeEventListener("click", determine_eligibility);
+        // next_button_element.addEventListener("click", reset_navigator);
+        // set_next_button();
+        var next_button_element = document.getElementById("next_button");
+        next_button_element.innerHTML = "Reset"
+        next_button_element.removeEventListener("click", determine_eligibility)
+        next_button_element.addEventListener("click", reset_navigator);
+    } else {
+        console.log("current question code: " + current_question_code);
+        console.log(user_responses);
+        question_order();
+    };
+}
+
+var go_back = function() {
+    // delete responses for current question if it has been answered
+    switch (eligibility_determination == null) {
+        case true:
+            console.log("GO BACK");
+            console.log("current question code: " + current_question_code);
+            delete user_responses[current_question_code];
+            console.log("user responses:");
+            console.log(user_responses);
+            delete user_response_values[current_question_code];
+            console.log("user response values:");
+            console.log(user_responses);
+            // get list of questions already answered
+        default:
+            eligibility_determination = null;
+            var questions_answered = Object.keys(user_responses);
+            switch (questions_answered.length) {
+                case 0:
+                    // no questions answered yet, so show landing page text
+                    break;
+                default:
+                    // show the previously answered question
+                    var questions_answered = Object.keys(user_responses);
+                    var previous_question_code = questions_answered[questions_answered.length - 1];
+                    console.log("previous question code: " + previous_question_code);
+                    question_bank[previous_question_code].display_question();
+                    console.log("questions answered:");
+                    console.log(questions_answered);
+                    console.log(current_question_code);
+                    //  fill in the answers to the previous question
+                    var previous_answer_options = document.getElementsByName(previous_question_code);
+                    console.log("answer IDs:");
+                    previous_answer_options.forEach((option) => {
+                        console.log(option.id);
+                    });
+                    previous_answer_options.forEach((option) => {
+                        console.log("answer types:");
+                    });
+                    previous_answer_options.forEach((option) => {
+                        console.log(option.tagName);
+                    });
+                    previous_answer_options.forEach((option) => {
+                        switch(option.tagName) {
+                            // get answer options by tag name to ensure user responses are properly populated - school input is a <select> tag, so correct <option> must be selected
+                            case "SELECT":
+                                if (!school_navigator_id == null) {
+                                    var school_index = schools_navigator_id_list.indexOf(school_navigator_id);
+                                    console.log("school index: " + school_index);
+                                    var school_combo_box_element = document.getElementById("SCH");
+                                    school_combo_box_element.selectedIndex = school_index;
+                                };
+                                break;
+                            case "INPUT":
+                                if (user_responses[previous_question_code].includes(option.id)) {
+                                    option.checked = true;
+                                }
+                                break;
+                        };
+                    });
+                    break;
+            };
+            var next_button = document.getElementById("next_button");
+            next_button.innerHTML = "Next";
+            next_button.removeEventListener("click", reset_navigator);
+            next_button.addEventListener("click", determine_eligibility);
+        break;
+        };
+};
+
+var reset_navigator = function() {
+    // remove user response info
+    user_responses = {};
+    user_response_values = {};
+    school_navigator_id = null;
+    eligibility_determination = null;
+    // revert "next" button
+    var next_button_element = document.getElementById("next_button");
+    next_button_element.innerHTML = "Next"
+    next_button_element.removeEventListener("click", reset_navigator)
+    next_button_element.addEventListener("click", determine_eligibility);
+    question_order();
+};
+
+// CONTROLLER
+
+// add event listeners to buttons
+document.getElementById("back_button").addEventListener("click", go_back);
+document.getElementById("next_button").addEventListener("click", determine_eligibility);
+
+question_order();
+
+</script>
