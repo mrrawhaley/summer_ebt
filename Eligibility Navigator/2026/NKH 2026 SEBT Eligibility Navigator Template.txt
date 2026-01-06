@@ -649,10 +649,10 @@ var reset_navigator = function() {
 // CONTROLLER
 
 // change page title
-document.title = __TITLE__;
+document.title = "__TITLE__";
 
 // set navigator header
-document.getElementById("section_header").innerHTML = __TITLE__;
+document.getElementById("section_header").innerHTML = "__TITLE__";
 
 // add event listeners to buttons
 document.getElementById("back_button").addEventListener("click", go_back);
@@ -661,3 +661,4 @@ document.getElementById("next_button").addEventListener("click", determine_eligi
 question_order();
 
 </script>
+
